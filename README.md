@@ -38,21 +38,32 @@ A full‑stack web application that lets users **chat with their YouTube videos*
 
 ```bash
 .
-├── backend/                # FastAPI app
-|    |----src
-|    │     ├── ai/        # AI Features, langchain + chroma db
-|    │     ├── auth/      # Authentication and User Management
-|    │     ├── chats/     # User Chats and QAs management
-|    |     |--- utils/    # Universal helpers
-|    |     └── db/        # Postgresql setup (Database Code)
-│    |  .env
-|    | config.py
-|
-├── frontend/               # React app
-│   ├── src/
-│   │   ├── api/   # Chat UI, sidebar, auth forms
-│   │   ├── app/        # Login, dashboard, chat view
-│   │   └── assets/        # API helpers, JWT utils
+├── backend/                     # FastAPI app
+│   └── src/
+│       ├── ai/                  # AI features (LangChain, ChromaDB)
+│       ├── auth/                # Authentication and user management
+│       ├── chats/               # User chats and QAs management
+│       ├── utils/               # Universal helpers
+│       └── db/                  # PostgreSQL setup (database code)
+│   ├── .env
+│   └── config.py
+│
+├── frontend/                    # React app
+│   └── src/
+│       ├── api/                 # API helpers (auth, chats, base)
+│       ├── app/                 # Redux store and related logic
+│       ├── assets/              # Static assets (images, logos)
+│       ├── components/
+│       │   ├── auth/            # Auth form components
+│       │   ├── ui/              # Chat UI, sidebar, chat area, loaders, etc.
+│       ├── features/            # Redux slices (auth, chats)
+│       ├── helpers/             # Utility/helper functions
+│       ├── hooks/               # Custom React hooks
+│       ├── pages/               # Page components (Home, Login, Signup)
+│       ├── App.jsx
+│       ├── App.css
+│       ├── index.css
+│       └── main.jsx
 │
 └── README.md
 ```
