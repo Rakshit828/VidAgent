@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { FileText, Edit, Check, X } from "lucide-react";
+import { FileText, Edit, Check, X, Youtube, AlertCircle } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import useApiCall from '../../hooks/useApiCall.js';
 import ThreeDotLoader from './ThreeDotLoader';
@@ -183,26 +183,40 @@ const UrlInput = () => {
 
 
   return (
-    <div className="mx-auto w-full max-w-full px-2 sm:max-w-md">
+    <div className="mx-auto w-full max-w-full px-2 sm:max-w-md mb-2">
       <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <div className="flex w-full gap-1">
-          <input
-            aria-label="YouTube URL"
-            type="text"
-            value={videoURL}
-            onChange={(e) => setVideoURL(e.target.value)}
-            placeholder="Enter YouTube URL or ID"
-            disabled={inputDisabled}
-            className={`flex-1 px-2 py-1.5 rounded-xl bg-gray-800 text-white placeholder-gray-400 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition ${inputDisabled ? 'opacity-70 cursor-not-allowed' : ''}`}
-          />
+        <div className="flex w-full gap-1.5">
+          <div className="relative flex-1 group">
+            <Youtube className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none" />
+            <input
+              aria-label="YouTube URL"
+              type="text"
+              value={videoURL}
+              onChange={(e) => setVideoURL(e.target.value)}
+              placeholder="Enter YouTube URL or ID"
+              disabled={inputDisabled}
+              className={`w-full pl-9 pr-3 py-2 text-sm rounded-xl
+                         bg-gray-800/60 backdrop-blur-sm
+                         text-white placeholder-gray-500 
+                         border border-gray-700/50
+                         shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                         transition-all duration-200
+                         hover:bg-gray-800/80 hover:border-gray-600/50
+                         ${inputDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+            />
+          </div>
 
           <button
             type="submit"
             disabled={!canSave}
             title={isTranscriptGenerated && !isEditing ? "Click Edit to change URL" : "Save URL and generate transcript"}
-            className={`rounded-xl px-2 py-1.5 shadow-md flex items-center justify-center transition ${canSave ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-600 cursor-not-allowed'} text-white`}
+            className={`rounded-xl px-2.5 py-2 shadow-md flex items-center justify-center 
+                       transition-all duration-200 transform hover:scale-105 active:scale-95
+                       ${canSave 
+                         ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white shadow-blue-500/20' 
+                         : 'bg-gray-700/60 cursor-not-allowed text-gray-500'}`}
           >
-            {isTranscriptGenerated && !isEditing ? <Check size={20} /> : <FileText size={20} />}
+            {isTranscriptGenerated && !isEditing ? <Check size={16} /> : <FileText size={16} />}
           </button>
 
           <button
@@ -210,9 +224,13 @@ const UrlInput = () => {
             onClick={handleEdit}
             disabled={!canEdit}
             title={canEdit ? "Edit URL to change it" : "Already editing or no transcript yet"}
-            className={`rounded-xl px-2 py-1.5 shadow-md flex items-center justify-center transition ${canEdit ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-600 cursor-not-allowed'} text-white`}
+            className={`rounded-xl px-2.5 py-2 shadow-md flex items-center justify-center 
+                       transition-all duration-200 transform hover:scale-105 active:scale-95
+                       ${canEdit 
+                         ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-500/20' 
+                         : 'bg-gray-700/60 cursor-not-allowed text-gray-500'}`}
           >
-            <Edit size={20} />
+            <Edit size={16} />
           </button>
 
           {isEditing && (
@@ -224,41 +242,59 @@ const UrlInput = () => {
                 setLocalError("");
                 setSuccessMessage("Edit cancelled");
               }}
-              className="rounded-xl px-2 py-1.5 shadow-md flex items-center justify-center bg-red-600 hover:bg-red-700 text-white"
+              className="rounded-xl px-2.5 py-2 shadow-md flex items-center justify-center 
+                         bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 
+                         text-white transition-all duration-200 transform hover:scale-105 active:scale-95
+                         shadow-red-500/20 animate-slide-in"
               title="Cancel editing"
             >
-              <X size={20} />
+              <X size={16} />
             </button>
           )}
         </div>
 
-        <div className="mt-1">
-          {isAnyLoading && (
-            <div className="text-gray-400 text-sm p-2 bg-gray-800/50 rounded-lg flex gap-2 items-center">
-              <ThreeDotLoader />
-              <span>{isLoadingFetch ? loadingMsgFetch : loadingMsgUpdate}</span>
-            </div>
-          )}
+        {/* Status Messages */}
+        {isAnyLoading && (
+          <div className="text-blue-300 text-xs p-2.5 bg-blue-500/10 rounded-xl
+                          border border-blue-500/20 flex gap-2 items-center backdrop-blur-sm
+                          animate-fade-in">
+            <ThreeDotLoader />
+            <span className="font-medium">{isLoadingFetch ? loadingMsgFetch : loadingMsgUpdate}</span>
+          </div>
+        )}
 
-          {isAnyError && (
-            <div className="text-red-400 text-sm p-2 bg-red-900/20 rounded-lg">
-              <strong>Error:</strong>&nbsp;{isErrorFetch ? errorMsgFetch : errorMsgUpdate}
+        {isAnyError && (
+          <div className="text-red-300 text-xs p-2.5 bg-red-900/20 rounded-xl
+                          border border-red-500/30 flex gap-2 items-start backdrop-blur-sm
+                          animate-shake">
+            <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+            <div>
+              <strong className="font-semibold">Error:</strong> {isErrorFetch ? errorMsgFetch : errorMsgUpdate}
             </div>
-          )}
+          </div>
+        )}
 
-          {!isAnyLoading && (localError) && (
-            <div className="text-red-400 text-sm p-2 bg-red-900/20 rounded-lg">
-              <strong>Error:</strong>&nbsp;{localError}
+        {!isAnyLoading && (localError) && (
+          <div className="text-red-300 text-xs p-2.5 bg-red-900/20 rounded-xl
+                          border border-red-500/30 flex gap-2 items-start backdrop-blur-sm
+                          animate-shake">
+            <AlertCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+            <div>
+              <strong className="font-semibold">Error:</strong> {localError}
             </div>
-          )}
+          </div>
+        )}
 
-          {!isAnyLoading && successMessage && (
-            <div className="text-green-300 text-sm p-2 bg-green-900/10 rounded-lg">
-              {successMessage}
-            </div>
-          )}
-        </div>
+        {!isAnyLoading && successMessage && (
+          <div className="text-green-300 text-xs p-2.5 bg-green-900/20 rounded-xl
+                          border border-green-500/30 flex gap-2 items-center backdrop-blur-sm
+                          animate-fade-in">
+            <Check className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="font-medium">{successMessage}</span>
+          </div>
+        )}
       </form>
+
     </div>
   );
 };

@@ -107,7 +107,7 @@ const ChatArea = () => {
 
 
   return (
-    <div className="flex flex-col h-screen bg-gray-900 overflow-hidden w-full relative">
+    <div className="flex flex-col h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 overflow-hidden w-full relative">
       <div className="flex-1 flex flex-col min-h-0 w-full">
         <div
           ref={chatContainerRef}
@@ -117,17 +117,17 @@ const ChatArea = () => {
 
             {/* Landing page */}
             {(!questionsAnswers || questionsAnswers.length === 0) && !embedUrl && (
-              <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4">
-                <div className="w-12 h-12 sm:w-16 md:w-20 bg-gray-800 rounded-full flex items-center justify-center mb-6">
-                  <Bot className="w-6 h-6 sm:w-8 md:w-10 text-gray-400" />
+              <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 animate-fade-in">
+                <div className="w-12 h-12 sm:w-16 md:w-20 bg-gradient-to-br from-gray-800 to-gray-700 rounded-full flex items-center justify-center mb-6 shadow-lg animate-pulse-slow">
+                  <Bot className="w-6 h-6 sm:w-8 md:w-10 text-blue-400" />
                 </div>
-                <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-light text-white mb-3">
+                <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-light text-gray-300 mb-3 animate-slide-up" style={{animationDelay: '0.1s'}}>
                   Your New Youtube Companion
                 </h2>
-                <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium text-gray-200">
+                <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium text-gray-100 animate-slide-up" style={{animationDelay: '0.2s'}}>
                   Ask | Learn | Chat
                 </h1>
-                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-gradient mt-2">
+                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent mt-2 animate-slide-up" style={{animationDelay: '0.3s'}}>
                   ChatTube AI
                 </h1>
               </div>
@@ -135,12 +135,14 @@ const ChatArea = () => {
 
             {/* Video embed */}
             {embedUrl && (
-              <div className="mb-8">
+              <div className="mb-8 animate-fade-in">
                 <div className="flex items-center gap-2 mb-3">
-                  <Play className="w-5 h-5 text-red-500" />
+                  <div className="w-8 h-8 bg-red-500/10 rounded-full flex items-center justify-center">
+                    <Play className="w-4 h-4 text-red-500" fill="currentColor" />
+                  </div>
                   <span className="text-sm font-medium text-gray-300">Video Content</span>
                 </div>
-                <div className="relative w-full rounded-2xl overflow-hidden shadow-lg bg-gray-800 border border-gray-700">
+                <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl bg-gray-800 border border-gray-700/50 transition-all duration-300 hover:shadow-blue-900/20 hover:border-gray-600">
                   <div className="aspect-video">
                     <iframe
                       src={embedUrl}
@@ -159,29 +161,37 @@ const ChatArea = () => {
             {questionsAnswers && questionsAnswers.length > 0 && (
               <div className="space-y-8">
                 {questionsAnswers.map((qa, index) => (
-                  <div key={index} className="space-y-4 pb-6 border-b border-gray-800 last:border-b-0 last:pb-0">
+                  <div key={index} className="space-y-4 pb-6 border-b border-gray-800/50 last:border-b-0 last:pb-0 animate-fade-in-up">
+
+
                     {/* User query */}
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-                        <User className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="flex-1 text-base text-gray-100 leading-relaxed break-words word-break-break-all">
-                        <strong className="text-2xl">{qa.query}</strong>
+                    <div className="flex w-full justify-end">
+                      <div className="flex items-start gap-3 max-w-[75%] group">
+                        <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl rounded-tr-sm px-4 py-2.5 text-base text-white leading-relaxed break-words shadow-lg transform transition-all duration-200 hover:shadow-blue-500/25 hover:scale-[1.02]">
+                          {qa.query}
+                        </div>
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center flex-shrink-0 shadow-md ring-2 ring-blue-500/20">
+                          <User className="w-4 h-4 text-white" />
+                        </div>
                       </div>
                     </div>
 
+
                     {/* Bot answer */}
-                    <div className="flex items-start gap-3 mb-0">
-                      <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Bot className="w-4 h-4 text-gray-300" />
+                    <div className="flex items-start gap-3 mb-0 group">
+                      <div className="w-8 h-8 bg-gradient-to-br from-gray-700 to-gray-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md ring-2 ring-gray-600/20">
+                        <Bot className="w-4 h-4 text-blue-400" />
                       </div>
-                      <div className="flex-1 text-base text-gray-200 leading-relaxed break-words whitespace-pre-wrap">
+                      <div className="flex-1 text-base text-gray-200 leading-relaxed break-words whitespace-pre-wrap bg-gray-800/40 rounded-2xl rounded-tl-sm px-4 py-3 backdrop-blur-sm border border-gray-700/30 transition-all duration-200 hover:bg-gray-800/60 hover:border-gray-600/50">
                         {!qa.answer && isLoadingResponse && index === questionsAnswers.length - 1 ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 text-blue-400">
                             {loadingMsgResponse} <ThreeDotLoader size={10} />
                           </div>
                         ) : !qa.answer && !isLoadingResponse && index === questionsAnswers.length - 1 ? (
-                          <div className="text-yellow-500">Waiting for response...</div>
+                          <div className="text-yellow-400 flex items-center gap-2">
+                            <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
+                            Waiting for response...
+                          </div>
                         ) : qa.answer ? (
                           <FormattedResponse text={qa.answer} />
                         ) : (
@@ -201,7 +211,7 @@ const ChatArea = () => {
       </div>
 
       {/* Inputs */}
-      <div className="sticky bottom-0 w-full z-20 backdrop-blur-sm">
+      <div className="sticky bottom-0 w-full z-20 bg-gradient-to-t from-gray-900 via-gray-900/95 to-transparent backdrop-blur-md">
         <div className="max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 pt-1.5">
           <UrlInput />
           <ChatInput

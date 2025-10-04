@@ -56,13 +56,21 @@ const ChatInput = ({
 
 
   return (
-    <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8">
-
+    <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8 mb-2">
       <form
         onSubmit={handleSendQueries}
-        className="bg-gray-700 rounded-3xl flex items-center p-1 gap-2 sm:gap-3"
+        className="relative group bg-gradient-to-r from-gray-800/80 to-gray-700/80 
+                   backdrop-blur-xl rounded-3xl flex items-center p-1.5 gap-2 sm:gap-3
+                   border border-gray-700/50 shadow-2xl
+                   transition-all duration-300
+                   hover:border-gray-600/50 hover:shadow-blue-900/10"
         aria-label="Chat input form"
       >
+        {/* Decorative gradient line on focus */}
+        <div className="absolute inset-0 rounded-3xl opacity-0 group-focus-within:opacity-100 
+                        transition-opacity duration-300 pointer-events-none
+                        bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 blur-xl -z-10" />
+
         <textarea
           ref={textareaRef}
           value={query}
@@ -71,26 +79,42 @@ const ChatInput = ({
           placeholder={!isChatSelected ? "Enter a video to start chatting..." : "Type a message..."}
           rows={1}
           disabled={!isChatSelected || isLoading}
-          className="flex-1 resize-none bg-gray-700 text-white rounded-3xl 
-                     px-2 sm:px-3 py-1.5 sm:py-2 
+          className="flex-1 resize-none bg-transparent text-white rounded-3xl 
+                     px-3 sm:px-4 py-2.5 sm:py-3 
                      leading-[1.5] text-sm sm:text-base 
                      focus:outline-none 
                      custom-dark-scrollbar
-                     disabled:opacity-50 disabled:cursor-not-allowed"
+                     placeholder-gray-500
+                     disabled:opacity-50 disabled:cursor-not-allowed
+                     transition-opacity duration-200"
         />
         <button
           type="submit"
           aria-label="Send message"
           disabled={isLoading || !query.trim()}
-          className="bg-blue-500 text-white 
-                     p-2 sm:p-3 
+          className="relative group/btn bg-gradient-to-r from-blue-600 to-purple-600 text-white 
+                     p-2.5 sm:p-3.5 
                      rounded-full flex items-center justify-center 
-                     hover:bg-blue-600 transition
-                     disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-500"
+                     hover:from-blue-500 hover:to-purple-500
+                     active:from-blue-700 active:to-purple-700
+                     transition-all duration-200
+                     transform hover:scale-110 active:scale-95
+                     disabled:from-gray-600 disabled:to-gray-600
+                     disabled:cursor-not-allowed disabled:transform-none
+                     shadow-lg hover:shadow-xl hover:shadow-blue-500/25
+                     overflow-hidden"
         >
-          <PaperAirplaneIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 
+                          translate-x-[-100%] group-hover/btn:translate-x-[100%] 
+                          transition-transform duration-700 ease-in-out" />
+          
+          <PaperAirplaneIcon className={`w-4 h-4 sm:w-5 sm:h-5 relative z-10 
+                                         transition-transform duration-200
+                                         ${isLoading ? 'animate-pulse' : 'group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5'}`} />
         </button>
       </form>
+
     </div>
   );
 };

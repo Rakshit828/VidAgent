@@ -1,3 +1,4 @@
+
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400..800&display=swap')
 
@@ -13,7 +14,7 @@
   }
 
   h1 {
-    @apply mx-auto max-w-4xl text-center text-5xl font-bold leading-tight tracking-[-1%] text-white sm:text-[64px] sm:leading-[76px];
+    @apply mx-auto max-w-4xl text-center text-5xl font-bold leading-tight tracking-[-1%] text-white sm:leading-[76px];
   }
 
   h2 {

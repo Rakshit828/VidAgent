@@ -15,7 +15,7 @@ VERSION = 'v1'
 async def lifespan(app: FastAPI):
     await init_db()
 
-    ai_components =  initialize_ai_components(ai_model='openai/gpt-oss-120b')
+    ai_components =  initialize_ai_components(ai_model='openai/gpt-oss-20b')
     app.state.ai_components = ai_components
 
     yield
