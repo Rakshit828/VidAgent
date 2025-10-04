@@ -15,7 +15,7 @@ class AiComponents:
         embedding_model
     ):
         print("Loading AI components")
-        self.llm = ChatGroq(model=ai_model, temperature=1, max_tokens=1500)
+        self.llm = ChatGroq(model=ai_model, temperature=1.5, max_tokens=1500)
 
         self.embedding_model = HuggingFaceEmbeddings(model_name=embedding_model)
 
@@ -38,8 +38,8 @@ class AiComponents:
         )
         return vector_db
     
+
     def get_response_llm(self, prompt):
-        print(prompt)
         response = self.llm.invoke(prompt)
         return response
     
@@ -109,6 +109,6 @@ class AiComponents:
 
 def initialize_ai_components(
     ai_model='meta-llama/llama-4-scout-17b-16e-instruct',
-    embedding_model='sentence-transformers/all-MiniLM-L6-v2'
+    embedding_model='sentence-transformers/all-Mpnet-base-v2'
 ):
     return AiComponents(ai_model, embedding_model)

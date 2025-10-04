@@ -171,7 +171,7 @@ const ChatArea = () => {
                     </div>
 
                     {/* Bot answer */}
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-3 mb-0">
                       <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center flex-shrink-0">
                         <Bot className="w-4 h-4 text-gray-300" />
                       </div>
@@ -195,14 +195,14 @@ const ChatArea = () => {
               </div>
             )}
 
-            <div ref={messagesEndRef} className="h-6" />
+            <div ref={messagesEndRef} className="h-2" />
           </div>
         </div>
       </div>
 
       {/* Inputs */}
       <div className="sticky bottom-0 w-full z-20 backdrop-blur-sm">
-        <div className="max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 pt-2">
+        <div className="max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 pt-1.5">
           <UrlInput />
           <ChatInput
             query={query}

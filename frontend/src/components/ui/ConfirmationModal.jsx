@@ -1,6 +1,14 @@
 import React from "react";
 
-const ConfirmationModal = ({ isOpen, onClose, onClickConfirm, title, description }) => {
+const ConfirmationModal = ({ 
+    isOpen, 
+    onClose, 
+    onClickConfirm, 
+    title, 
+    highlightedText, 
+    description
+}) => {
+
     if (!isOpen) return null;
 
     return (
@@ -13,7 +21,7 @@ const ConfirmationModal = ({ isOpen, onClose, onClickConfirm, title, description
 
             {/* Modal content with sky-blue border */}
             <div className="relative bg-gray-800 text-white rounded-lg shadow-lg max-w-sm w-full p-4 z-10 border-2 border-sky-500">
-                <h2 className="text-lg font-semibold mb-2">{title}</h2>
+                <h2 className="text-lg mb-2">{title} <strong className="">{highlightedText}</strong></h2>
                 <p className="text-sm mb-4">{description}</p>
                 <div className="flex justify-end gap-2">
                     <button

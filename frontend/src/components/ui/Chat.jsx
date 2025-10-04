@@ -167,8 +167,9 @@ const Chat = ({ chatID, chatTitle, isSelected, dispatch }) => {
                 isOpen={modalOpen}
                 onClose={() => setModalOpen(false)}
                 onClickConfirm={confirmDelete}
-                title="Are you sure you want to delete this chat?"
-                description="This action cannot be undone."
+                title="Delete Chat ? "
+                highlightedText={chatTitle}
+                description="This action cannot be undone. All the queries and answers will be deleted too."
             />
         </>
     );

@@ -137,7 +137,7 @@ async def generate_tanscript(
     }
 
     
-    request.app.state.ai_components.chains['general_chain'].invoke(data)
+    await request.app.state.ai_components.chains['general_chain'].ainvoke(data)
 
     return JSONResponse(
         content="Sucessful"
@@ -172,5 +172,5 @@ async def get_response_from_llm(
         }
     }
 
-    response = request.app.state.ai_components.chains['main_processing_chain'].invoke(data)
+    response = await request.app.state.ai_components.chains['main_processing_chain'].ainvoke(data)
     return response

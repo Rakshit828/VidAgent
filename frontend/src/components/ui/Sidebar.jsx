@@ -1,5 +1,5 @@
 import { ArrowLeftCircle, PenBox, X } from "lucide-react";
-import logo from "../../assets/image.png";
+import appLogo from "../../assets/appLogo.png";
 import SidebarContent from "./SidebarContent";
 import NewChatModal from "./NewChatModal";
 import { useState } from "react";
@@ -53,7 +53,7 @@ const Sidebar = ({ sidebar, setSidebar, isMobile }) => {
           className={`flex w-full h-12 sm:h-14 items-center ${sidebar ? "justify-between px-3" : "justify-center"
             }`}
         >
-          {sidebar && <img src={logo} alt="App Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />}
+          {sidebar && <img src={appLogo} alt="App Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain" />}
 
           {!isMobile && (
             <ArrowLeftCircle
