@@ -21,7 +21,6 @@ def load_video_transcript(video_data: dict[str, str]) -> str:
         transcript_text_list = [transcript_snippet.text for transcript_snippet in transcript]
         transcript_text = " ".join(transcript_text_list)
         video_data.update({"transcript_text": transcript_text})
-        print(video_data)
         return video_data
     
     except NoTranscriptFound:

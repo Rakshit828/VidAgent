@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from "react";
+import InputFieldsWrapper from "./InputFieldsWrapper.jsx";
 import ChatInput from "./ChatInput.jsx";
 import UrlInput from "./UrlInput.jsx";
 import FormattedResponse from "./FormattedResponse.jsx";
@@ -37,6 +38,7 @@ const ChatArea = () => {
     errorMsg: errorMsgSave,
     handleApiCall: handleApiCallSave
   } = useApiCall(createNewQA)
+
 
   const handleGetResponse = async () => {
     const currentQuery = query.trim();
@@ -96,6 +98,7 @@ const ChatArea = () => {
     }
   };
 
+
   useEffect(() => {
     if (isFirstRender) {
       setIsFirstRender(false);
@@ -121,13 +124,13 @@ const ChatArea = () => {
                 <div className="w-12 h-12 sm:w-16 md:w-20 bg-gradient-to-br from-gray-800 to-gray-700 rounded-full flex items-center justify-center mb-6 shadow-lg animate-pulse-slow">
                   <Bot className="w-6 h-6 sm:w-8 md:w-10 text-blue-400" />
                 </div>
-                <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-light text-gray-300 mb-3 animate-slide-up" style={{animationDelay: '0.1s'}}>
+                <h2 className="text-sm sm:text-base md:text-lg lg:text-xl font-light text-gray-300 mb-3 animate-slide-up" style={{ animationDelay: '0.1s' }}>
                   Your New Youtube Companion
                 </h2>
-                <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium text-gray-100 animate-slide-up" style={{animationDelay: '0.2s'}}>
+                <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-medium text-gray-100 animate-slide-up" style={{ animationDelay: '0.2s' }}>
                   Ask | Learn | Chat
                 </h1>
-                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent mt-2 animate-slide-up" style={{animationDelay: '0.3s'}}>
+                <h1 className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 bg-clip-text text-transparent mt-2 animate-slide-up" style={{ animationDelay: '0.3s' }}>
                   ChatTube AI
                 </h1>
               </div>
@@ -210,18 +213,17 @@ const ChatArea = () => {
         </div>
       </div>
 
-      {/* Inputs */}
-      <div className="sticky bottom-0 w-full z-20 bg-gradient-to-t from-gray-900 via-gray-900/95 to-transparent backdrop-blur-md">
-        <div className="max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 pt-1.5">
+      <div className="sticky bottom-0 z-20 bg-gradient-to-t from-gray-900 via-gray-900/95 to-transparent backdrop-blur-md">
+        <InputFieldsWrapper>
           <UrlInput />
           <ChatInput
             query={query}
             setQuery={setQuery}
             generateResponse={handleGetResponse}
-            isLoading={isLoadingResponse}
+            isResponseLoading={isLoadingResponse}
             isDisabled={true}
           />
-        </div>
+        </InputFieldsWrapper>
       </div>
 
 

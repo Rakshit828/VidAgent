@@ -5,11 +5,17 @@ from src.config import CONFIG
 import uuid
 from datetime import datetime, timedelta, timezone
 from .exceptions import ExpiredJWTTokenError
+from itsdangerous import URLSafeTimedSerializer
 
 
 
 REFRESH_TOKEN_EXPIRY = timedelta(days=7)
 ACCESS_TOKEN_EXPIRY = timedelta(minutes=15)
+
+SERIALIZER = URLSafeTimedSerializer(
+    secret_key=CONFIG.JWT_SECRET_KEY,
+    salt="email-verifier"
+)
 
 
 password_context = CryptContext(schemes=['bcrypt'])
@@ -66,3 +72,23 @@ def decode_jwt_tokens(jwt_token: str):
         raise ExpiredJWTTokenError()
     except InvalidTokenError:
         raise ValueError("Invalid JWT token.")
+
+
+
+def create_url_safe_token(body: dict):
+    try:
+        token = SERIALIZER.dumps(dict)
+        return token
+    
+    except Exception as e:
+        print(e)
+
+
+
+def decode_url_safe_token(token: str):
+    try:
+        decoded_token = SERIALIZER.loads(token)
+        return decoded_token
+    
+    except Exception as e:
+        print(e)

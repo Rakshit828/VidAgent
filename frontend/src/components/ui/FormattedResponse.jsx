@@ -55,13 +55,13 @@ const FormattedResponse = ({ text }) => {
 
   if (!text) return null;
 
+  // --- Parse inline formatting ---
   const parseInlineFormatting = (input) => {
     const parts = [];
     let remaining = input;
     let key = 0;
 
     while (remaining.length > 0) {
-      // Inline math: \( ... \)
       const latexParen = remaining.match(/^\\\((.+?)\\\)/);
       if (latexParen) {
         parts.push(
@@ -73,7 +73,6 @@ const FormattedResponse = ({ text }) => {
         continue;
       }
 
-      // Inline math: $ ... $
       const latexDollar = remaining.match(/^\$([^$]+)\$/);
       if (latexDollar) {
         parts.push(
@@ -85,7 +84,6 @@ const FormattedResponse = ({ text }) => {
         continue;
       }
 
-      // Bold **text**
       const bold = remaining.match(/^\*\*([^*]+?)\*\*/);
       if (bold) {
         parts.push(
@@ -97,7 +95,6 @@ const FormattedResponse = ({ text }) => {
         continue;
       }
 
-      // Italic *text*
       const italic = remaining.match(/^\*([^*]+?)\*(?!\*)/);
       if (italic) {
         parts.push(
@@ -109,7 +106,6 @@ const FormattedResponse = ({ text }) => {
         continue;
       }
 
-      // Code `text`
       const code = remaining.match(/^`([^`]+?)`/);
       if (code) {
         parts.push(
@@ -124,7 +120,6 @@ const FormattedResponse = ({ text }) => {
         continue;
       }
 
-      // Link [text](url)
       const link = remaining.match(/^\[([^\]]+)\]\(([^)]+)\)/);
       if (link) {
         parts.push(
@@ -142,7 +137,6 @@ const FormattedResponse = ({ text }) => {
         continue;
       }
 
-      // Plain text
       const nextSpecial = remaining.search(/[\*`\[\\$]/);
       if (nextSpecial === -1) {
         parts.push(<span key={`text-${key++}`}>{remaining}</span>);
@@ -160,12 +154,52 @@ const FormattedResponse = ({ text }) => {
     return parts;
   };
 
+  // --- Render tables ---
+  const renderTable = (lines, key) => {
+    if (lines.length < 2) return null;
+
+    const headers = lines[0].split('|').slice(1, -1).map((h) => h.trim());
+    const rows = lines.slice(2).map((line) =>
+      line.split('|').slice(1, -1).map((cell) => cell.trim())
+    );
+
+    return (
+      <div key={`table-${key}`} className="overflow-x-auto my-4">
+        <table className="min-w-full border border-gray-600 text-sm">
+          <thead className="bg-gray-700">
+            <tr>
+              {headers.map((h, i) => (
+                <th key={i} className="px-3 py-2 text-left text-white border-b border-gray-600">
+                  {parseInlineFormatting(h)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="bg-gray-800">
+            {rows.map((row, ri) => (
+              <tr key={ri} className="border-b border-gray-600">
+                {row.map((cell, ci) => (
+                  <td key={ci} className="px-3 py-2 text-gray-200">
+                    {parseInlineFormatting(cell)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  // --- Main formatter ---
   const formatText = (inputText) => {
     const lines = inputText.split('\n');
     const elements = [];
     let key = 0;
     let inDisplayMath = false;
     let mathBuffer = [];
+    let inTable = false;
+    let tableLines = [];
 
     for (const line of lines) {
       const trimmed = line.trim();
@@ -190,13 +224,21 @@ const FormattedResponse = ({ text }) => {
         continue;
       }
 
-      if (trimmed === '---' || trimmed === '***') {
-        elements.push(
-          <hr key={`hr-${key++}`} className="my-4 border-t border-gray-600" />
-        );
+      // Table detection
+      if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+        inTable = true;
+        tableLines.push(trimmed);
         continue;
+      } else if (inTable) {
+        elements.push(renderTable(tableLines, key++));
+        inTable = false;
+        tableLines = [];
       }
 
+      if (trimmed === '---' || trimmed === '***') {
+        elements.push(<hr key={`hr-${key++}`} className="my-4 border-t border-gray-600" />);
+        continue;
+      }
       if (trimmed === '') {
         elements.push(<div key={`space-${key++}`} className="h-2" />);
         continue;
@@ -240,6 +282,8 @@ const FormattedResponse = ({ text }) => {
         </p>
       );
     }
+
+    if (inTable) elements.push(renderTable(tableLines, key++));
 
     return elements;
   };

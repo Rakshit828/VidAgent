@@ -91,11 +91,11 @@
 
 /* ========== Animation Classes ========== */
 .animate-fade-in {
-  animation: fade-in 0.4s ease-out;
+  animation: fade-in 0.3s ease-out;
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.4s ease-out;
+  animation: fade-in-up 0.3s ease-out;
   opacity: 0;
   animation-fill-mode: forwards;
 }
@@ -107,7 +107,7 @@
 }
 
 .animate-slide-down {
-  animation: slide-down 0.4s ease-out;
+  animation: slide-down 0.3s ease-out;
 }
 
 .animate-slide-in {

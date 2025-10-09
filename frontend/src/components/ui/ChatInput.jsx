@@ -6,20 +6,20 @@ const ChatInput = ({
   query,
   setQuery,
   generateResponse,
-  isLoading = false
+  isResponseLoading,
 }) => {
 
   const { selectedChatId } = useSelector(state => state.chats.currentChat)
-  
+
   const isChatSelected = !!selectedChatId
 
   const textareaRef = useRef(null);
 
   const handleSendQueries = async (event) => {
     event?.preventDefault();
-    
+
     // Prevent sending if already loading or query is empty
-    if (!query.trim() || isLoading) return;
+    if (!query.trim()) return;
 
     const textarea = textareaRef.current;
     // lock current height to prevent immediate layout jump when we clear query
@@ -40,15 +40,16 @@ const ChatInput = ({
     const textarea = textareaRef.current;
     if (!textarea) return;
     textarea.style.height = "auto";
-    const maxHeight = 240; // px
+    const maxHeight = 150; // px
     const newHeight = Math.min(textarea.scrollHeight, maxHeight);
     textarea.style.height = `${newHeight}px`;
     textarea.style.overflowY = textarea.scrollHeight > maxHeight ? "auto" : "hidden";
   }, [query]);
 
+
   // Enter to send, Shift+Enter to newline
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey && !isLoading) {
+    if (e.key === "Enter" && !e.shiftKey ) {
       e.preventDefault();
       handleSendQueries();
     }
@@ -56,7 +57,7 @@ const ChatInput = ({
 
 
   return (
-    <div className="w-full px-2 sm:px-4 md:px-6 lg:px-8 mb-2">
+    <div className="w-full">
       <form
         onSubmit={handleSendQueries}
         className="relative group bg-gradient-to-r from-gray-800/80 to-gray-700/80 
@@ -78,7 +79,7 @@ const ChatInput = ({
           onKeyDown={handleKeyDown}
           placeholder={!isChatSelected ? "Enter a video to start chatting..." : "Type a message..."}
           rows={1}
-          disabled={!isChatSelected || isLoading}
+          disabled={!isChatSelected}
           className="flex-1 resize-none bg-transparent text-white rounded-3xl 
                      px-3 sm:px-4 py-2.5 sm:py-3 
                      leading-[1.5] text-sm sm:text-base 
@@ -91,7 +92,7 @@ const ChatInput = ({
         <button
           type="submit"
           aria-label="Send message"
-          disabled={isLoading || !query.trim()}
+          disabled={isResponseLoading || !query.trim()}
           className="relative group/btn bg-gradient-to-r from-blue-600 to-purple-600 text-white 
                      p-2.5 sm:p-3.5 
                      rounded-full flex items-center justify-center 
@@ -108,10 +109,10 @@ const ChatInput = ({
           <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 
                           translate-x-[-100%] group-hover/btn:translate-x-[100%] 
                           transition-transform duration-700 ease-in-out" />
-          
+
           <PaperAirplaneIcon className={`w-4 h-4 sm:w-5 sm:h-5 relative z-10 
                                          transition-transform duration-200
-                                         ${isLoading ? 'animate-pulse' : 'group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5'}`} />
+                                         ${isResponseLoading ? 'animate-pulse' : 'group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5'}`} />
         </button>
       </form>
 

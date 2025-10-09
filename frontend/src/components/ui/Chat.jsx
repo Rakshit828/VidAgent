@@ -6,7 +6,7 @@ import { getCurrentChatData, deleteChat, updateChat } from '../../api/chats';
 import { initializeCurrentChat, deleteUserChat, updateUserChats } from '../../features/chatsSlice';
 import ConfirmationModal from './ConfirmationModal';
 
-// --- Portal Component ---
+
 const Portal = ({ children }) => {
     const [mounted, setMounted] = useState(false);
     const [container] = useState(() => document.createElement('div'));
@@ -43,7 +43,7 @@ const Chat = ({ chatID, chatTitle, isSelected, dispatch }) => {
     const handleSelectCurrentChat = async (e) => {
         // Don't trigger if clicking on menu button or editing
         if (isEditingTitle || isLoadingSelect) return;
-        
+
         const response = await handleSelectApiCall([chatID]);
         if (response.success) dispatch(initializeCurrentChat(response.data));
     };
@@ -107,23 +107,23 @@ const Chat = ({ chatID, chatTitle, isSelected, dispatch }) => {
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (!menuOpen) return;
-            
+
             // Check if click is outside both menu button and menu
             const isOutsideButton = menuButtonRef.current && !menuButtonRef.current.contains(event.target);
             const isOutsideMenu = menuRef.current && !menuRef.current.contains(event.target);
-            
+
             if (isOutsideButton && isOutsideMenu) {
                 setMenuOpen(false);
             }
         };
-        
+
         const handleScroll = () => setMenuOpen(false);
-        
+
         if (menuOpen) {
             document.addEventListener('mousedown', handleClickOutside);
             window.addEventListener('scroll', handleScroll, true);
         }
-        
+
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
             window.removeEventListener('scroll', handleScroll, true);
@@ -134,7 +134,7 @@ const Chat = ({ chatID, chatTitle, isSelected, dispatch }) => {
     const openMenu = (e) => {
         e.stopPropagation();
         e.preventDefault();
-        
+
         if (!menuButtonRef.current) return;
 
         const rect = menuButtonRef.current.getBoundingClientRect();

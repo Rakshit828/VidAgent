@@ -8,6 +8,8 @@ passlib
 pyjwt
 asyncpg
 bcrypt
+fastapi-mail
+itsdangerous
 
 
 # Migrations

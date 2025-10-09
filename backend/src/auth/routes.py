@@ -5,11 +5,12 @@ from pydantic import EmailStr
 from typing import TypedDict
 
 from src.db.main import get_session
-from .schemas import UserCreateSchema, UserResponseSchema, UserLogInSchema, TokensSchema
+from .schemas import UserCreateSchema, UserResponseSchema, UserLogInSchema, TokensSchema, EmailModel
 from .models import Users
 from .services import AuthService
 from .dependencies import AccessTokenBearer, RefreshTokenBearer, admin_checker
 from .utils import create_jwt_tokens
+from src.mail_service import mail, create_message
 
 # The admin_checker will implement both the authentication and authorization
 
@@ -69,6 +70,18 @@ async def refresh_access_token(
     print("NEW access token", new_access_token)
     return new_access_token
 
+
+
+@auth_routes.post("/sendmail")
+async def send_mail(emails: EmailModel):
+    addresses = emails.addresses
+    message = await create_message(
+        recipients=addresses,
+        subject="Welcome To The App",
+        msg_type="welcome"
+    )
+    await mail.send_message(message=message)
+    return JSONResponse(content={"message": "Email sent successfully !!!"})
 
 
 # ---------------------------- Admin Protected Routes ------------------------------

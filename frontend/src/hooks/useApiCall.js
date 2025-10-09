@@ -97,8 +97,8 @@ function useApiCall(apiFunction, loadingMessage = "", requiresHeader = true) {
       return { success: false, data: null };
     }
   }, [accessToken, refreshToken, apiFunction, loadingMessage, requiresHeader, dispatch]);
-  // dispatch is stable but we include it anyway
 
+  
   return {
     isLoading,
     setIsLoading,

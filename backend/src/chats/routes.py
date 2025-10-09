@@ -72,7 +72,7 @@ async def delete_chat(
 ):
     user_id = decoded_token_data['sub']
     youtube_video_url = await chat_service.get_video_url_by_chatid(chat_uid, session)
-    is_transcript_deleted = await request.app.state.ai_components.delete_video_transcript(user_id, youtube_video_url)
+    is_transcript_deleted = await request.app.state.ai_components.vector_db.delete_video_transcript(user_id, youtube_video_url)
     result = await chat_service.delete_chat(chat_uid, session)
 
     if result and is_transcript_deleted:
@@ -106,7 +106,7 @@ async def get_all_current_chat_data(
 ):
     youtube_video_url = await chat_service.get_video_url_by_chatid(chat_uid, session)
     user_id = decoded_token_data['sub']
-    transcript_exists = await request.app.state.ai_components.check_for_transcript(user_id, youtube_video_url)
+    transcript_exists = await request.app.state.ai_components.vector_db.check_for_transcript(user_id, youtube_video_url)
 
     result = await chat_service.get_all_qa(chat_uid, session)
 
@@ -127,7 +127,7 @@ async def generate_tanscript(
     decoded_token_data: Dict = Depends(AccessTokenBearer())
 ):
     user_id = decoded_token_data['sub']
-    transcript_exists = await request.app.state.ai_components.check_for_transcript(user_id, video_id)
+    transcript_exists = await request.app.state.ai_components.vector_db.check_for_transcript(user_id, video_id)
     if  transcript_exists:
         raise TranscriptAlreadyExistError()
     
@@ -137,7 +137,7 @@ async def generate_tanscript(
     }
 
     
-    await request.app.state.ai_components.chains['general_chain'].ainvoke(data)
+    await request.app.state.ai_components.chains['load_store_chain'].ainvoke(data)
 
     return JSONResponse(
         content="Sucessful"
@@ -154,7 +154,7 @@ async def get_response_from_llm(
 ):
     user_id = decoded_token_data['sub']
 
-    transcript_exists = await request.app.state.ai_components.check_for_transcript(user_id, video_id)
+    transcript_exists = await request.app.state.ai_components.vector_db.check_for_transcript(user_id, video_id)
     if not transcript_exists:
         raise TranscriptDoesNotExistError()
     
@@ -172,5 +172,5 @@ async def get_response_from_llm(
         }
     }
 
-    response = await request.app.state.ai_components.chains['main_processing_chain'].ainvoke(data)
+    response = await request.app.state.ai_components.chains['retrieve_response_chain'].ainvoke(data)
     return response

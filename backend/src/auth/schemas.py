@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, EmailStr
 from uuid import UUID
 from datetime import datetime
+from typing import List
 
 
 class UserCreateSchema(BaseModel):
@@ -34,3 +35,7 @@ class UserResponseSchema(BaseModel):
 class TokensSchema(BaseModel):
     access_token: str
     refresh_token: str
+
+
+class EmailModel(BaseModel):
+    addresses: List[EmailStr]
