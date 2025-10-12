@@ -6,6 +6,7 @@ from langchain.text_splitter import SentenceTransformersTokenTextSplitter, Recur
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough, RunnableLambda, RunnableSequence
 from langchain.schema import Document
 from langchain_core.prompts import PromptTemplate
+import asyncio
 
 from .youtube import load_video_transcript
 from .exceptions import VectorDatabaseError, RetrieverError
@@ -173,8 +174,9 @@ class Components:
 
 
     async def get_response_llm(self, prompt):
-        response = await self.llm.ainvoke(prompt)
-        return response
+        response = self.llm.astream(prompt)
+        async for chunk in response:
+            yield chunk.content
 
 
     def build_chains(self):
@@ -189,9 +191,9 @@ class Components:
             "user_query": RunnablePassthrough()
         })
         
-        retriever_response_chain = parallel_chain | self.prompts.PROMPT | RunnableLambda(self.get_response_llm) | self.parser
+        retriever_prompt_chain = parallel_chain | self.prompts.PROMPT 
 
-        return {"load_store_chain": load_store_chain, "retrieve_response_chain": retriever_response_chain}
+        return {"load_store_chain": load_store_chain, "retriever_prompt_chain": retriever_prompt_chain}
 
 
 

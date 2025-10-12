@@ -7,8 +7,11 @@ import { User, Bot, Play } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { addNewQuestionsAnswers, updateLastAnswer } from "../../features/chatsSlice.js";
 import ThreeDotLoader from "./ThreeDotLoader.jsx";
+import { createNewQA } from "../../api/chats.js";
 import useApiCall from "../../hooks/useApiCall.js";
-import { createNewQA, getResponseFromLLM } from "../../api/chats.js";
+import useStreaming from "../../hooks/useStreaming.js";
+import { BASE_URL, CHATS_PREFIX } from "../../api/base.js";
+import React from "react";
 
 
 const ChatArea = () => {
@@ -20,94 +23,122 @@ const ChatArea = () => {
   const { selectedChatId, videoId, embedUrl, questionsAnswers } = currentChat;
 
   const [query, setQuery] = useState("");
-
   const dispatch = useDispatch();
 
   const {
-    isLoading: isLoadingResponse,
-    loadingMsg: loadingMsgResponse,
-    isError: isErrorResponse,
-    errorMsg: errorMsgResponse,
-    handleApiCall: handleApiCallResponse
-  } = useApiCall(getResponseFromLLM, "Thinking");
-
-  const {
     isLoading: isLoadingSave,
-    loadingMsg: loadingMsgSave,
-    isError: isErrorSave,
     errorMsg: errorMsgSave,
     handleApiCall: handleApiCallSave
-  } = useApiCall(createNewQA)
+  } = useApiCall(createNewQA);
 
+  const bufferRef = useRef("");
+
+  // Always call hooks in same order
+  const { isStreaming, error: streamError, streamData } = useStreaming(
+    (accumulatedText) => {
+      bufferRef.current = accumulatedText;
+    }
+  );
+
+  // --- Throttle streaming updates to Redux ---
+  useEffect(() => {
+    if (!isStreaming) return;
+
+    const interval = setInterval(() => {
+      if (bufferRef.current) {
+        dispatch(updateLastAnswer({
+          answer: bufferRef.current,
+          chatUID: selectedChatId
+        }));
+      }
+    }, 150); // update every 150ms
+
+    return () => clearInterval(interval);
+  }, [isStreaming, selectedChatId, dispatch]);
+
+  // --- CRITICAL FIX: Dispatch final complete text when streaming stops ---
+  useEffect(() => {
+    // When streaming transitions from true to false, dispatch the final buffer
+    if (!isStreaming && bufferRef.current) {
+      dispatch(updateLastAnswer({
+        answer: bufferRef.current,
+        chatUID: selectedChatId
+      }));
+    }
+  }, [isStreaming, selectedChatId, dispatch]);
 
   const handleGetResponse = async () => {
     const currentQuery = query.trim();
+    if (!currentQuery || isStreaming) return;
+    setQuery("");
 
-    if (!currentQuery) return;
+    // Clear buffer for new query
+    bufferRef.current = "";
 
-    // Step 1: Add the question to Redux (with empty answer)
     dispatch(addNewQuestionsAnswers({
       query: currentQuery,
       chatUID: selectedChatId
     }));
 
-    // Step 2: Get response from LLM
-    const response = await handleApiCallResponse([videoId, currentQuery]);
+    const apiUrl = `${BASE_URL}${CHATS_PREFIX}/response/${videoId}/${encodeURIComponent(currentQuery)}`;
+    const response = await streamData(apiUrl);
 
-    const answerText = response.success && response.data
-      ? response.data
-      : `Error: ${errorMsgResponse || "Failed to get response"}`;
-
-    // Step 3: Update the answer in Redux
-    dispatch(updateLastAnswer({
-      answer: answerText,
-      chatUID: selectedChatId
-    }));
-
-    // Step 4: Save to database
-    if (response.success) {
-      await handleSaveQA(currentQuery, answerText);
+    if (!response.success) {
+      const errorText = `Error: ${response.error || "Failed to get response"}`;
+      dispatch(updateLastAnswer({
+        answer: errorText,
+        chatUID: selectedChatId
+      }));
+      return;
     }
-  };
 
+    // Save the complete response data
+    await handleSaveQA(currentQuery, response.data);
+  };
 
   const handleSaveQA = async (questionText, answerText) => {
     const qaData = {
       query: questionText,
       answer: answerText,
       chat_uid: selectedChatId
-    }
+    };
 
     const response = await handleApiCallSave([qaData]);
-
     if (response.success) {
       console.log("QA saved successfully to database");
     } else {
       console.error("Failed to save QA:", errorMsgSave);
     }
-  }
+  };
 
+  // --- Optimized scroll handler ---
   const scrollToBottom = (smooth = true) => {
     const container = chatContainerRef.current;
     if (!container) return;
-    const top = container.scrollHeight - container.clientHeight;
-    if (typeof container.scrollTo === "function") {
-      container.scrollTo({ top, behavior: smooth ? "smooth" : "auto" });
-    } else {
-      container.scrollTop = top;
-    }
+    requestAnimationFrame(() => {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: smooth ? "smooth" : "auto"
+      });
+    });
   };
 
+  // --- Throttle scroll during streaming ---
+  useEffect(() => {
+    if (!isStreaming) return;
+    const handle = setInterval(() => scrollToBottom(false), 200);
+    return () => clearInterval(handle);
+  }, [isStreaming]);
 
+  // --- Smooth scroll when messages update ---
   useEffect(() => {
     if (isFirstRender) {
       setIsFirstRender(false);
       return;
     }
-    const timer = setTimeout(() => scrollToBottom(true), 50);
+    const timer = setTimeout(() => scrollToBottom(true), 80);
     return () => clearTimeout(timer);
   }, [questionsAnswers]);
-
 
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 overflow-hidden w-full relative">
@@ -118,7 +149,7 @@ const ChatArea = () => {
         >
           <div className="w-full max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6">
 
-            {/* Landing page */}
+            {/* Landing Page */}
             {(!questionsAnswers || questionsAnswers.length === 0) && !embedUrl && (
               <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-4 animate-fade-in">
                 <div className="w-12 h-12 sm:w-16 md:w-20 bg-gradient-to-br from-gray-800 to-gray-700 rounded-full flex items-center justify-center mb-6 shadow-lg animate-pulse-slow">
@@ -136,7 +167,7 @@ const ChatArea = () => {
               </div>
             )}
 
-            {/* Video embed */}
+            {/* Video Embed */}
             {embedUrl && (
               <div className="mb-8 animate-fade-in">
                 <div className="flex items-center gap-2 mb-3">
@@ -160,13 +191,11 @@ const ChatArea = () => {
               </div>
             )}
 
-            {/* Questions & Answers */}
+            {/* Chat Messages */}
             {questionsAnswers && questionsAnswers.length > 0 && (
               <div className="space-y-8">
                 {questionsAnswers.map((qa, index) => (
                   <div key={index} className="space-y-4 pb-6 border-b border-gray-800/50 last:border-b-0 last:pb-0 animate-fade-in-up">
-
-
                     {/* User query */}
                     <div className="flex w-full justify-end">
                       <div className="flex items-start gap-3 max-w-[75%] group">
@@ -179,29 +208,28 @@ const ChatArea = () => {
                       </div>
                     </div>
 
-
                     {/* Bot answer */}
                     <div className="flex items-start gap-3 mb-0 group">
                       <div className="w-8 h-8 bg-gradient-to-br from-gray-700 to-gray-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md ring-2 ring-gray-600/20">
                         <Bot className="w-4 h-4 text-blue-400" />
                       </div>
                       <div className="flex-1 text-base text-gray-200 leading-relaxed break-words whitespace-pre-wrap bg-gray-800/40 rounded-2xl rounded-tl-sm px-4 py-3 backdrop-blur-sm border border-gray-700/30 transition-all duration-200 hover:bg-gray-800/60 hover:border-gray-600/50">
-                        {!qa.answer && isLoadingResponse && index === questionsAnswers.length - 1 ? (
+                        {!qa.answer && isStreaming && index === questionsAnswers.length - 1 ? (
                           <div className="flex items-center gap-2 text-blue-400">
-                            {loadingMsgResponse} <ThreeDotLoader size={10} />
+                            <span className="animate-pulse">Generating response</span>
+                            <ThreeDotLoader size={10} />
                           </div>
-                        ) : !qa.answer && !isLoadingResponse && index === questionsAnswers.length - 1 ? (
+                        ) : !qa.answer && !isStreaming && index === questionsAnswers.length - 1 ? (
                           <div className="text-yellow-400 flex items-center gap-2">
                             <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
                             Waiting for response...
                           </div>
                         ) : qa.answer ? (
-                          <FormattedResponse text={qa.answer} />
+                          <MemoFormattedResponse text={qa.answer} />
                         ) : (
                           <div className="text-gray-500">No response yet</div>
                         )}
                       </div>
-
                     </div>
                   </div>
                 ))}
@@ -220,14 +248,12 @@ const ChatArea = () => {
             query={query}
             setQuery={setQuery}
             generateResponse={handleGetResponse}
-            isResponseLoading={isLoadingResponse}
-            isDisabled={true}
+            isResponseLoading={isStreaming}
+            isDisabled={!videoId || isStreaming}
           />
         </InputFieldsWrapper>
       </div>
 
-
-      {/* Footer */}
       <div className="w-full max-w-3xl mx-auto px-2 sm:px-4 lg:px-6 pb-2">
         <p className="text-xs text-gray-500 text-center leading-relaxed">
           AI can make mistakes. Verify important information.
@@ -236,5 +262,8 @@ const ChatArea = () => {
     </div>
   );
 };
+
+
+const MemoFormattedResponse = React.memo(FormattedResponse);
 
 export default ChatArea;

@@ -81,7 +81,7 @@ const ChatInput = ({
           rows={1}
           disabled={!isChatSelected}
           className="flex-1 resize-none bg-transparent text-white rounded-3xl 
-                     px-3 sm:px-4 py-2.5 sm:py-3 
+                     px-3 sm:px-4 py-2.5 sm:py-3 min-w-0
                      leading-[1.5] text-sm sm:text-base 
                      focus:outline-none 
                      custom-dark-scrollbar

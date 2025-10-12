@@ -183,7 +183,7 @@ const UrlInput = () => {
 
 
   return (
-    <div className="w-[70%]">
+    <div className="w-[70%] mx-auto">
       <form onSubmit={handleSubmit} className="flex flex-col gap-2">
         <div className="flex w-full gap-1.5">
           <div className="relative flex-1 group">

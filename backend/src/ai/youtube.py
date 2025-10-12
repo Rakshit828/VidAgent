@@ -18,9 +18,13 @@ def load_video_transcript(video_data: dict[str, str]) -> str:
     """Return the transcript of the video in string format"""
     try:
         transcript = youtube_transcript_api.fetch(video_id=video_data['video_id'], languages=["en"])
-        transcript_text_list = [transcript_snippet.text for transcript_snippet in transcript]
+        for snippet in transcript:
+            print(f"/n {snippet}")
+            
+        transcript_text_list = [transcript_snippet.text + f"+{transcript_snippet.duration}" for transcript_snippet in transcript]
         transcript_text = " ".join(transcript_text_list)
         video_data.update({"transcript_text": transcript_text})
+        
         return video_data
     
     except NoTranscriptFound:

@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import JSONResponse, StreamingResponse
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from .schemas import CreateQASchema, ResponseQASchema, CreateChatSchema, UpdateChatSchema, ResponseChatSchema, ResponseCurrentChatSchema
@@ -172,5 +172,9 @@ async def get_response_from_llm(
         }
     }
 
-    response = await request.app.state.ai_components.chains['retrieve_response_chain'].ainvoke(data)
-    return response
+    prompt = await request.app.state.ai_components.chains['retriever_prompt_chain'].ainvoke(data)
+
+    return StreamingResponse(
+        request.app.state.ai_components.get_response_llm(prompt),
+        media_type="plain/text"
+    )

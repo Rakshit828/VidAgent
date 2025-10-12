@@ -21,6 +21,7 @@ langchain
 langchain_community
 huggingface
 langchain-groq
+langchain-google-genai
 langchain-huggingface
 youtube-transcript-api
 huggingface
