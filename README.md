@@ -1,4 +1,4 @@
-# Chat with YouTube Videos
+# ChatTube-AI : Chat with YouTube Videos
 
 A full‑stack RAG(Retrieval-Augmented Generation) based web application that lets users **chat with their YouTube videos**. The interface is modeled after modern LLM chat UIs (like ChatGPT), with a sidebar for multiple chats and a main chat area for interaction.
 
