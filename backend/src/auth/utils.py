@@ -4,7 +4,7 @@ from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from src.config import CONFIG
 import uuid
 from datetime import datetime, timedelta, timezone
-from .exceptions import ExpiredJWTTokenError
+from .exceptions import ExpiredAccessTokenError, ExpiredRefreshTokenError, InvalidJWTTokenError
 from itsdangerous import URLSafeTimedSerializer
 
 
@@ -59,7 +59,7 @@ async def create_jwt_tokens(user_uuid: uuid.UUID, role: str, access: bool = Fals
 
 
 
-def decode_jwt_tokens(jwt_token: str):
+def decode_jwt_tokens(jwt_token: str, is_refresh: bool = False):
     try:
         decoded_jwt = decode(
             jwt=jwt_token,
@@ -69,9 +69,9 @@ def decode_jwt_tokens(jwt_token: str):
         return decoded_jwt
 
     except ExpiredSignatureError:
-        raise ExpiredJWTTokenError()
+        raise ExpiredAccessTokenError() if is_refresh is False else ExpiredRefreshTokenError()
     except InvalidTokenError:
-        raise ValueError("Invalid JWT token.")
+        raise InvalidJWTTokenError()
 
 
 

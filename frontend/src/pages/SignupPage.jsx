@@ -1,7 +1,7 @@
 import { useState } from "react";
 import AuthForm from "../components/auth/AuthForm.jsx";
 import InputFormField from "../components/auth/InputFormField.jsx";
-import Spinner from "../components/ui/Spinner.jsx";
+import Spinner from "../components/home/Spinner.jsx";
 import useApiCall from "../hooks/useApiCall.js";
 import { userSignUp } from "../api/auth.js";
 import { useNavigate } from "react-router-dom";

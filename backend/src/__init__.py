@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from src.ai.components import initialize_ai_components
 from src.db.main import init_db
+from src.ai.pinecone_vdb import init_pinecone_db
 
 load_dotenv()
 
@@ -14,8 +15,13 @@ VERSION = 'v1'
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    pinecone_db = await init_pinecone_db()
 
-    ai_components =  initialize_ai_components(ai_model="openai/gpt-oss-120b")
+    ai_components =  await initialize_ai_components(ai_model="openai/gpt-oss-120b", temperature=0.7)
+
+    ai_components.vector_db = pinecone_db
+    ai_components.chains = await ai_components.build_chains()
+
     app.state.ai_components = ai_components
 
     yield
@@ -32,13 +38,12 @@ app = FastAPI(
 # Define allowed origins
 origins = [
     "http://localhost:5173",
-    "http://localhost:8080"
 ]
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],      # allows requests from this origin
+    allow_origins=origins,
     allow_credentials=True,     # allows cookies, authorization headers, etc.
     allow_methods=["*"],        # allows all HTTP methods (GET, POST, etc.)
     allow_headers=["*"],        # allows all headers

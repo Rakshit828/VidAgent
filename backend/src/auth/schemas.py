@@ -37,5 +37,9 @@ class TokensSchema(BaseModel):
     refresh_token: str
 
 
+class AccessTokenSchema(BaseModel):
+    access_token: str
+
+
 class EmailModel(BaseModel):
     addresses: List[EmailStr]

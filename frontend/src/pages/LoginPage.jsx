@@ -1,10 +1,10 @@
 import { useState } from "react";
 import AuthForm from "../components/auth/AuthForm.jsx";
 import InputFormField from "../components/auth/InputFormField.jsx";
-import Spinner from "../components/ui/Spinner.jsx";
+import Spinner from "../components/home/Spinner.jsx";
 import {userLogIn} from "../api/auth.js";
 import { useDispatch } from "react-redux";
-import { setTokens } from "../features/authSlice.js";
+import { setAccessToken } from "../features/authSlice.js";
 import useApiCall from "../hooks/useApiCall.js";
 import { useNavigate } from "react-router-dom";
 
@@ -27,7 +27,7 @@ const LoginPage = () => {
     event.preventDefault()
     const response = await handleApiCall([{email: email, password: password}])
     console.log("Data sent by server on login: ", response.data)
-    dispatch(setTokens(response.data))
+    dispatch(setAccessToken(response.data))
     navigate("/", { replace:  true })
   }
 

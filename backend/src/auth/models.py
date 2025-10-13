@@ -28,10 +28,8 @@ class Users(SQLModel, table=True):
 
     # ORM-level cascade; DB-level handled in Chats
     chats: List["Chats"] = Relationship(
-        back_populates="user",
-        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+        back_populates="user", sa_relationship_kwargs={"cascade": "all, delete-orphan"}
     )
 
     def __repr__(self):
         return f"<class Users {self.email}>"
-

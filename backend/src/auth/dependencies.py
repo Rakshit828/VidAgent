@@ -1,4 +1,4 @@
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPBearer, APIKeyCookie
 from fastapi import Request, Depends
 from fastapi import HTTPException, status
 from .utils import decode_jwt_tokens
@@ -6,9 +6,20 @@ from .services import AuthService
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.db.main import get_session
 from .models import Users
+from .exceptions import (
+    InvalidJWTTokenError
+)
 
 auth_service = AuthService()
 
+class RefreshTokenBearer(APIKeyCookie):
+    async def __call__(self, request: Request):
+        refresh_token =  await super().__call__(request)
+        if refresh_token is None:
+            raise InvalidJWTTokenError()
+        decoded_token = decode_jwt_tokens(jwt_token=refresh_token)
+        return decoded_token
+    
 
 class TokenBearer(HTTPBearer):
     async def __call__(self, request: Request):
@@ -18,26 +29,12 @@ class TokenBearer(HTTPBearer):
         # Credentials is JWT token
         #  If any error occurs it is raised. Hence, in this line, the token is already validated.
         decoded_token = decode_jwt_tokens(jwt_token=credentials)
-        self.validate_token_mistake(decoded_token)
         return decoded_token
         
-    def validate_token_mistake(self):
-        pass
-
 
 class AccessTokenBearer(TokenBearer):
-    def validate_token_mistake(self, token_data: dict):
-        if token_data['type'] == 'refresh':
-            raise HTTPException(detail="Provide access token, not refresh", status_code=status.HTTP_401_UNAUTHORIZED)
-        return 
+    pass
 
-
-class RefreshTokenBearer(TokenBearer):
-    def validate_token_mistake(self, token_data: dict):
-        if token_data['type'] == 'access':
-            raise HTTPException(detail="Provide refresh token, not access", status_code=status.HTTP_401_UNAUTHORIZED)
-        return
-    
 
 async def get_current_user(session: AsyncSession = Depends(get_session), token_data = Depends(AccessTokenBearer())):
     user_uid = token_data['sub']

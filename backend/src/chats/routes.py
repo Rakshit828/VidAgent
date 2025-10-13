@@ -41,7 +41,6 @@ async def get_all_chats(
 ):
     user_uid = decoded_token_data['sub']
     all_chats = await chat_service.get_all_chats_by_uuid(user_uid=user_uid, session=session)
-    print(all_chats)
     return all_chats
 
 
@@ -160,16 +159,9 @@ async def get_response_from_llm(
     
     data = {
         "query": query,
-        "search_type": "similarity",
-        "search_kwargs": {
-            "k": 4,
-            "filter": {
-                "$and" : [
-                    {"user_id": user_id},
-                    {"video_id": video_id}
-                ]
-            }
-        }
+        "user_id": user_id,
+        "video_id": video_id,
+        "k": 5,
     }
 
     prompt = await request.app.state.ai_components.chains['retriever_prompt_chain'].ainvoke(data)

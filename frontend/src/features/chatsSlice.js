@@ -51,17 +51,15 @@ export const chatsSlice = createSlice({
         return;
       }
       const payload = snakeKeysToCamel(action.payload)
-
       if(action.payload?.type === 'newchat'){
         payload['selectedChatId'] = payload.uuid
         payload['isTranscriptGenerated'] = false
         payload['questionsAnswers'] = []
       }
-
       payload['embedUrl'] = getYouTubeEmbedUrl(payload.youtubeVideoUrl)
       payload['videoId'] = getYouTubeVideoId(payload.youtubeVideoUrl)
       state.currentChat = payload
-      console.log("Current Chat: ", state.currentChat)
+ 
     },
 
     // Add a new Q&A entry (used when user sends a question)
@@ -99,8 +97,6 @@ export const chatsSlice = createSlice({
       state.currentChat.videoId = getYouTubeVideoId(payload.youtubeVideoUrl) 
       state.currentChat.isTranscriptGenerated = false 
     }
-
-
   }
 })
 

@@ -2,41 +2,37 @@ import { useState, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   selectAccessToken,
-  selectRefreshToken,
   setAccessToken,
 } from "../features/authSlice";
 import { handleRefreshToken } from "../api/auth.js";
+import { useNavigate } from "react-router-dom";
+
 
 const useStreaming = (onChunk) => {
-  // --- Hooks at top level, always same order ---
+
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState(null);
   const abortControllerRef = useRef(null);
+  const navigate = useNavigate()
 
   const accessToken = useSelector((state) => selectAccessToken(state));
-  const refreshToken = useSelector((state) => selectRefreshToken(state));
   const dispatch = useDispatch();
+  
 
-  // --- Internal helper to refresh token ---
   const refreshAccessToken = useCallback(async () => {
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${refreshToken}`,
-    };
-    const response = await handleRefreshToken(headers);
-
+    const response = await handleRefreshToken();
     if (response.success) return response.data;
-
     if (
       response.data?.error === "expired_jwt_token_error" &&
       response.status_code === 401
     ) {
+      navigate("/login", { replace: true })
       throw new Error("Session expired. Please login again.");
     }
-
     throw new Error("Failed to refresh token");
-  }, [refreshToken]);
+  });
 
+  
   // --- Perform the streaming fetch ---
   const performStream = useCallback(async (url, token, options = {}) => {
     const controller = new AbortController();
@@ -116,15 +112,12 @@ const useStreaming = (onChunk) => {
         setIsStreaming(false);
 
         if (err.name === "AbortError") {
-          console.log("Stream aborted");
           return { success: false, error: "Request cancelled", aborted: true };
         }
-
         console.error("Streaming error:", err);
         setError(err.message);
         return { success: false, error: err.message };
       } finally {
-        // Clean up abort controller
         abortControllerRef.current = null;
       }
     },

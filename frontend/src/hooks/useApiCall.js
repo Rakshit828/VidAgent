@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { selectAccessToken, selectRefreshToken, setAccessToken } from "../features/authSlice";
+import { selectAccessToken, setAccessToken } from "../features/authSlice";
 import { handleRefreshToken } from "../api/auth.js";
 
 function useApiCall(apiFunction, loadingMessage = "", requiresHeader = true) {
@@ -9,20 +9,12 @@ function useApiCall(apiFunction, loadingMessage = "", requiresHeader = true) {
   const [isError, setIsError] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const accessToken = useSelector(selectAccessToken);
-  const refreshToken = useSelector(selectRefreshToken);
-
+  const accessToken = useSelector(selectAccessToken)
   const dispatch = useDispatch();
 
   const handleTokenRefresh = async () => {
     // Returns { access_token: "dfadfsdufadf" } if successful
-    const header = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${refreshToken}`
-    };
-    console.log("Header for refresh ", header);
-    
-    const response = await handleRefreshToken(header);
+    const response = await handleRefreshToken();
     if (response.success) {
       return response.data;
     }
@@ -41,13 +33,13 @@ function useApiCall(apiFunction, loadingMessage = "", requiresHeader = true) {
           "Authorization": `Bearer ${token}`
         }
       : undefined;
-
-    console.log("Header for access ", header);
+      
     const response = await apiFunction(...apiParameters, header);
     return response
   };
   
   const handleApiCall = useCallback(async (apiParameters = []) => {
+    apiParameters = Array.isArray(apiParameters) ? apiParameters : [];
     setErrorMsg("");
     setIsError(false);
     setIsLoading(true);
@@ -55,13 +47,10 @@ function useApiCall(apiFunction, loadingMessage = "", requiresHeader = true) {
 
     try {
       // First attempt with current access token
-      console.log("First api call parameters ", apiParameters)
       let response = await makeApiCallWithToken(accessToken, apiParameters);
       
-      console.log("Response of first api call (any) ", response)
-
       // Handle expired access token
-      if (!response.success && response.data?.error?.trim() === "expired_jwt_token_error" && response.status_code === 401) {
+      if (response.status_code === 401) {
         // Refresh token and retry same api
         setLoadingMsg("Verifying User");
         const accessTokenObj = await handleTokenRefresh();
@@ -96,7 +85,7 @@ function useApiCall(apiFunction, loadingMessage = "", requiresHeader = true) {
       setLoadingMsg("");
       return { success: false, data: null };
     }
-  }, [accessToken, refreshToken, apiFunction, loadingMessage, requiresHeader, dispatch]);
+  }, [accessToken, apiFunction, loadingMessage, requiresHeader, dispatch]);
 
   
   return {
