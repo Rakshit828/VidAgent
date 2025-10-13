@@ -1,31 +1,21 @@
 # ChatTube-AI : Chat with YouTube Videos
 
-A full‑stack RAG(Retrieval-Augmented Generation) based web application that lets users **chat with their YouTube videos**. The interface is modeled after modern LLM chat UIs (like ChatGPT), with a sidebar for multiple chats and a main chat area for interaction.
+A full‑stack RAG (Retrieval-Augmented Generation) web application that lets users **chat with their YouTube videos**. The interface is modeled after modern LLM chat UIs (like ChatGPT), with a sidebar for multiple chats and a main chat area for interaction.
 
 ---
 
-<<<<<<< HEAD
-## ScreenShots
-
----
-
-## Features
-
-=======
 ## Screenshots
 
 Watch the application in action:
 
----<img width="1920" height="1080" alt="Screenshot (171)" src="https://github.com/user-attachments/assets/9f7f1d8a-e21d-4c34-a79c-5e40b44e596d" />
-
+<img width="1920" height="1080" alt="Screenshot (171)" src="https://github.com/user-attachments/assets/9f7f1d8a-e21d-4c34-a79c-5e40b44e596d" />
 <img width="1920" height="1080" alt="Screenshot (170)" src="https://github.com/user-attachments/assets/b670f8dc-601a-4c0d-b3fa-391dd672547c" />
-
 <img width="1920" height="1080" alt="Screenshot (169)" src="https://github.com/user-attachments/assets/e40b87bf-5f12-4c0e-9c0d-bec9aac5466a" />
+
+---
 
 ## Features
 
-
->>>>>>> 357a095d3d8576419a85a1b576ea8cf4fd2b882e
 * **React frontend** with a ChatGPT‑style interface
   * Sidebar for switching between multiple chats
   * Main chat area for Q&A
@@ -33,7 +23,7 @@ Watch the application in action:
 * **FastAPI backend** for APIs and business logic
 * **Authentication** with JWT tokens
 * **Database**: PostgreSQL for structured data
-* **Vector database**: ChromaDB for embeddings and retrieval
+* **Vector database**: **Pinecone** for embeddings and retrieval
 * **LangChain integration** for LLM orchestration
 * **Chat organization**
   * One user → multiple chats
@@ -47,7 +37,7 @@ Watch the application in action:
 * **Frontend**: React, Tailwind CSS
 * **Backend**: FastAPI (Python)
 * **AI/LLM**: LangChain
-* **Vector DB**: ChromaDB
+* **Vector DB**: Pinecone
 * **Relational DB**: PostgreSQL
 * **Auth**: JWT
 
@@ -59,7 +49,7 @@ Watch the application in action:
 .
 ├── backend/                     # FastAPI app
 │   └── src/
-│       ├── ai/                  # AI features (LangChain, ChromaDB)
+│       ├── ai/                  # AI features (LangChain, Pinecone)
 │       ├── auth/                # Authentication and user management
 │       ├── chats/               # User chats and QAs management
 │       ├── utils/               # Universal helpers
@@ -67,7 +57,6 @@ Watch the application in action:
 │   ├── .env
 │   ├── config.py
 │   ├── requirements.txt
-│   └── main.py
 │
 ├── frontend/                    # React app
 │   └── src/
@@ -101,32 +90,33 @@ Watch the application in action:
 * **Python** >= 3.10
 * **PostgreSQL** running locally or via Docker
 * **OpenAI API Key** (or other LLM provider)
-* **Huggingface API Key** (for running local emdedding models)
-
+* **Huggingface API Key** (for running local embedding models)
+* **Pinecone API Key** (for vector database)
 
 ### Environment Variables
 
 Create a `.env` file in the `backend/` directory:
 
 ```env
-DATABASE_URL 
-GROQ_API_KEY
-HUGGINGFACE_API_KEY
-JWT_SECRET_KEY = 'e64e227cba901e8e22737cc6a07b922a'
-JWT_ALGORITHM = HS256
+DATABASE_URL=
+GROQ_API_KEY=
+HUGGINGFACE_API_KEY=
+PINECONE_API_KEY=
+PINECONE_ENVIRONMENT=
+JWT_SECRET_KEY=
+JWT_ALGORITHM=HS256
 
 ## Optional Configs
-MAIL_USERNAME
-MAIL_PASSWORD
-MAIL_SERVER
-MAIL_PORT
-MAIL_FROM 
-MAIL_FROM_NAME
-MAIL_STARTTLS
-MAIL_SSL_TLS
-USE_CREDENTIALS
-VALIDATE_CERTS
-
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_SERVER=
+MAIL_PORT=
+MAIL_FROM=
+MAIL_FROM_NAME=
+MAIL_STARTTLS=
+MAIL_SSL_TLS=
+USE_CREDENTIALS=
+VALIDATE_CERTS=
 ```
 
 ### Backend Setup
@@ -136,7 +126,7 @@ cd backend
 
 # Create and activate virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+venv\Scripts\activate  # On Windows
 
 # Install dependencies
 pip install -r requirements.txt
@@ -235,8 +225,4 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
 
-<<<<<<< HEAD
 For questions or support, please open an issue on GitHub.
-=======
-For questions or support, please open an issue on GitHub.
->>>>>>> 357a095d3d8576419a85a1b576ea8cf4fd2b882e
