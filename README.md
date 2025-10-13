@@ -1,15 +1,31 @@
-# Chat with YouTube Videos
+# ChatTube-AI : Chat with YouTube Videos
 
-A full‑stack web application that lets users **chat with their YouTube videos**. The interface is modeled after modern LLM chat UIs (like ChatGPT), with a sidebar for multiple chats and a main chat area for interaction.
+A full‑stack RAG(Retrieval-Augmented Generation) based web application that lets users **chat with their YouTube videos**. The interface is modeled after modern LLM chat UIs (like ChatGPT), with a sidebar for multiple chats and a main chat area for interaction.
 
 ---
 
+<<<<<<< HEAD
 ## ScreenShots
 
 ---
 
 ## Features
 
+=======
+## Screenshots
+
+Watch the application in action:
+
+---<img width="1920" height="1080" alt="Screenshot (171)" src="https://github.com/user-attachments/assets/9f7f1d8a-e21d-4c34-a79c-5e40b44e596d" />
+
+<img width="1920" height="1080" alt="Screenshot (170)" src="https://github.com/user-attachments/assets/b670f8dc-601a-4c0d-b3fa-391dd672547c" />
+
+<img width="1920" height="1080" alt="Screenshot (169)" src="https://github.com/user-attachments/assets/e40b87bf-5f12-4c0e-9c0d-bec9aac5466a" />
+
+## Features
+
+
+>>>>>>> 357a095d3d8576419a85a1b576ea8cf4fd2b882e
 * **React frontend** with a ChatGPT‑style interface
   * Sidebar for switching between multiple chats
   * Main chat area for Q&A
@@ -219,4 +235,8 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Contact
 
+<<<<<<< HEAD
 For questions or support, please open an issue on GitHub.
+=======
+For questions or support, please open an issue on GitHub.
+>>>>>>> 357a095d3d8576419a85a1b576ea8cf4fd2b882e
