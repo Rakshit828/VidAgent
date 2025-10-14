@@ -4,7 +4,7 @@ A full‑stack RAG (Retrieval-Augmented Generation) web application that lets us
 
 ---
 Watch the application in action:
-[ChatTube-AI](https://www.chattube-ai.netlify.app/)
+[ChatTube-AI](https://chattube-ai.netlify.app/)
 ---
 
 ## Features
