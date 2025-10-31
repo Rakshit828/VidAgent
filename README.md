@@ -5,19 +5,9 @@ A full‑stack RAG (Retrieval-Augmented Generation) web application that lets us
 ---
 
 ## Live Demo
-
-Watch the application in action:
+URL:
 [ChatTube-AI](https://chattube-ai.netlify.app/)
-
----
-
-## Screenshots
-
-<img width="1920" height="1080" alt="Screenshot (171)" src="https://github.com/user-attachments/assets/9f7f1d8a-e21d-4c34-a79c-5e40b44e596d" />
-<img width="1920" height="1080" alt="Screenshot (170)" src="https://github.com/user-attachments/assets/b670f8dc-601a-4c0d-b3fa-391dd672547c" />
-<img width="1920" height="1080" alt="Screenshot (169)" src="https://github.com/user-attachments/assets/e40b87bf-5f12-4c0e-9c0d-bec9aac5466a" />
-
----
+You have to wait for few seconds as the server takes time connect because its incative when not used.
 
 ## Features
 
