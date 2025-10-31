@@ -85,8 +85,8 @@ export const chatsSlice = createSlice({
       }
     },
 
-    setIsTranscriptGeneratedToTrue: (state, action) => {
-      state.currentChat.isTranscriptGenerated = action.payload ?? true;
+    updateIsTranscriptGenerated: (state, action) => {
+      state.currentChat.isTranscriptGenerated = action.payload;
     },
 
     updateCurrentChat: (state, action) => {
@@ -106,7 +106,7 @@ export const {
   addNewChat,
   addNewQuestionsAnswers,
   updateLastAnswer,
-  setIsTranscriptGeneratedToTrue,
+  updateIsTranscriptGenerated,
   updateCurrentChat,
   deleteUserChat,
   updateUserChats

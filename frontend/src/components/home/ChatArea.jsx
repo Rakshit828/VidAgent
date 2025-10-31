@@ -7,8 +7,8 @@ import { User, Bot, Play } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { addNewQuestionsAnswers, updateLastAnswer } from "../../features/chatsSlice.js";
 import ThreeDotLoader from "./ThreeDotLoader.jsx";
+import useCall from "../../hooks/useCall.js";
 import { createNewQA } from "../../api/chats.js";
-import useApiCall from "../../hooks/useApiCall.js";
 import useStreaming from "../../hooks/useStreaming.js";
 import { BASE_URL, CHATS_PREFIX } from "../../api/base.js";
 import React from "react";
@@ -29,11 +29,10 @@ const ChatArea = () => {
     isLoading: isLoadingSave,
     errorMsg: errorMsgSave,
     handleApiCall: handleApiCallSave
-  } = useApiCall(createNewQA);
+  } = useCall(createNewQA);
 
   const bufferRef = useRef("");
 
-  // Always call hooks in same order
   const { isStreaming, error: streamError, streamData } = useStreaming(
     (accumulatedText) => {
       bufferRef.current = accumulatedText;
@@ -55,6 +54,7 @@ const ChatArea = () => {
 
     return () => clearInterval(interval);
   }, [isStreaming, selectedChatId, dispatch]);
+
 
   // --- CRITICAL FIX: Dispatch final complete text when streaming stops ---
   useEffect(() => {
@@ -140,6 +140,8 @@ const ChatArea = () => {
     return () => clearTimeout(timer);
   }, [questionsAnswers]);
 
+
+  
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 overflow-hidden w-full relative">
       <div className="flex-1 flex flex-col min-h-0 w-full">
@@ -216,7 +218,7 @@ const ChatArea = () => {
                       <div className="flex-1 text-base text-gray-200 leading-relaxed break-words whitespace-pre-wrap bg-gray-800/40 rounded-2xl rounded-tl-sm px-4 py-3 backdrop-blur-sm border border-gray-700/30 transition-all duration-200 hover:bg-gray-800/60 hover:border-gray-600/50">
                         {!qa.answer && isStreaming && index === questionsAnswers.length - 1 ? (
                           <div className="flex items-center gap-2 text-blue-400">
-                            <span className="animate-pulse">Generating response</span>
+                            <span className="animate-pulse">Thinking</span>
                             <ThreeDotLoader size={10} />
                           </div>
                         ) : !qa.answer && !isStreaming && index === questionsAnswers.length - 1 ? (

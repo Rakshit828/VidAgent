@@ -5,6 +5,13 @@ from fastapi import HTTPException, status
 def make_error_detail(error_name: str, message: str):
     return {"error": error_name, "message": message}
 
+class EmailValidationError(HTTPException):
+    def __init__(self, headers=None):
+        super().__init__(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=make_error_detail("email_validation_error", "Email is invalid."),
+            headers=headers,
+        )
 
 # Authentication and Token Errors
 class ExpiredAccessTokenError(HTTPException):
@@ -49,6 +56,15 @@ class InvalidEmailError(HTTPException):
             status_code=status.HTTP_404_NOT_FOUND,
             detail=make_error_detail("invalid_email_error", "Email not found."),
             headers=headers,
+        )
+
+
+class EmailNotVerifiedError(HTTPException):
+    def __init__(self, headers = None):
+        super().__init__(
+            status_code = status.HTTP_401_UNAUTHORIZED,
+            detail = make_error_detail("email_not_verified_error", "Email is not verified"),
+            headers=headers
         )
 
 

@@ -129,17 +129,14 @@ async def generate_tanscript(
     transcript_exists = await request.app.state.ai_components.vector_db.check_for_transcript(user_id, video_id)
     if  transcript_exists:
         raise TranscriptAlreadyExistError()
-    
     data = {
         "user_id": user_id,
         "video_id": video_id
     }
-
-    
     await request.app.state.ai_components.chains['load_store_chain'].ainvoke(data)
 
     return JSONResponse(
-        content="Sucessful"
+        content="Transcript Generated Successfully"
     )
 
 

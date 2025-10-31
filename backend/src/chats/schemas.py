@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
-import re
+from src.utils.utils import get_video_id
 from uuid import UUID
 from typing import Optional, Any, List
 from datetime import datetime
@@ -13,13 +13,11 @@ class CreateChatSchema(BaseModel):
     @classmethod
     def validate_url(cls, value: Any):
         """
-        Validates a standard YouTube watch URL.
-        Example: https://www.youtube.com/watch?v=vTLpK5JNoWA
+        Accepts all valid YouTube URL formats or plain 11-char video IDs.
         """
-        pattern = r'^https:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]{11}$'
-        if (re.match(pattern, value)):
+        if get_video_id(value):
             return value
-        raise InvalidYoutubeURLError()
+        raise InvalidYoutubeURLError("Invalid YouTube URL or video ID.")
 
 
 class UpdateChatSchema(BaseModel):
@@ -30,14 +28,18 @@ class UpdateChatSchema(BaseModel):
     @classmethod
     def validate_url(cls, value: Any):
         """
-        Validates a standard YouTube watch URL.
-        Example: https://www.youtube.com/watch?v=vTLpK5JNoWA
+        Accepts all valid YouTube URL formats or plain 11-char video IDs.
         """
-        pattern = r'^https:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]{11}$'
-        if (re.match(pattern, value)):
+        if value is None:
             return value
-        raise InvalidYoutubeURLError()
+        if get_video_id(value):
+            return value
+        raise InvalidYoutubeURLError("Invalid YouTube URL or video ID.")
 
+class CreateQASchema(BaseModel):
+    query: str
+    answer: str
+    chat_uid: UUID 
 
 class ResponseChatSchema(BaseModel):
     uuid: UUID
@@ -47,12 +49,6 @@ class ResponseChatSchema(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-class CreateQASchema(BaseModel):
-    query: str
-    answer: str
-    chat_uid: UUID 
 
 
 class ResponseQASchema(BaseModel):

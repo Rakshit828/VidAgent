@@ -4,9 +4,12 @@ import { useDispatch, useSelector } from "react-redux";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
-import { handleRefreshToken } from "./api/auth.js";
+import { handleTokenRefresh } from "./api/auth.js";
 import { selectAccessToken, setAccessToken } from "./features/authSlice.js";
-import "./App.css";
+import VerificationInformation from "./pages/VerificationInformation.jsx";
+import VerifiedPage from "./pages/EmailVerifiedPage.jsx";
+import './App.css'
+
 
 const LoadingSpinner = () => (
   <div style={{
@@ -23,12 +26,14 @@ const LoadingSpinner = () => (
 const ProtectedRoute = ({ children }) => {
   const dispatch = useDispatch();
   const accessToken = useSelector(selectAccessToken);
+  
   const [authChecked, setAuthChecked] = useState(false);
   const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
     const verifyToken = async () => {
       // If token exists in Redux, allow access
+      console.log("Access token is : ", accessToken)
       if (accessToken) {
         setAllowed(true);
         setAuthChecked(true);
@@ -37,7 +42,9 @@ const ProtectedRoute = ({ children }) => {
 
       // Try to refresh using cookie
       try {
-        const response = await handleRefreshToken();
+        console.log("Going to call refresh")
+        const response = await handleTokenRefresh();
+        console.log("Called refresh")
 
         if (response.success && response.data?.access_token) {
           dispatch(setAccessToken(response.data));
@@ -78,6 +85,8 @@ const App = () => {
             </ProtectedRoute>
           }
         />
+        <Route path="/verify/login" element={ <VerifiedPage />} />
+        <Route path="/verify/info" element={<VerificationInformation />} />
       </Routes>
     </BrowserRouter>
   );

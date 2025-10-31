@@ -4,7 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 
-from src.ai.components import initialize_ai_components
+from src.config import CONFIG
+from src.ai.components import initialize_ai_components, Components
 from src.db.main import init_db
 from src.ai.pinecone_vdb import init_pinecone_db
 
@@ -16,11 +17,11 @@ VERSION = 'v1'
 async def lifespan(app: FastAPI):
     await init_db()
     pinecone_db = await init_pinecone_db()
-
-    ai_components =  await initialize_ai_components(ai_model="openai/gpt-oss-120b", temperature=0.7)
-
-    ai_components.vector_db = pinecone_db
-    ai_components.chains = await ai_components.build_chains()
+    ai_components: Components =  await initialize_ai_components(
+        ai_model="openai/gpt-oss-120b", 
+        temperature=0.7,
+        vector_db = pinecone_db
+    )
 
     app.state.ai_components = ai_components
 
@@ -37,7 +38,7 @@ app = FastAPI(
 
 # Define allowed origins
 origins = [
-    "http://localhost:5173",
+    CONFIG.FRONTEND_URL
 ]
 
 # Add CORS middleware

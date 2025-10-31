@@ -5,6 +5,17 @@ class Config(BaseSettings):
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
 
+    FRONTEND_URL: str
+    BACKEND_URL: str
+    
+    IS_DEV: bool
+
+    RAPID_API_KEY: str
+    RAPID_API_HOST: str
+
+    REFRESH_TOKEN_EXPIRY_DAYS: int
+    ACCESS_TOKEN_EXPIRY_MINUTES: int
+
     MAIL_USERNAME: str
     MAIL_PASSWORD: str
     MAIL_SERVER: str

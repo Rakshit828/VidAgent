@@ -1,34 +1,39 @@
 from urllib.parse import urlparse, parse_qs
 import re
 
+
 def get_video_id(url_or_id: str) -> str | None:
     """
-    Extract YouTube video ID from a URL or return the ID itself if input is just the ID.
-
-    Args:
-        url_or_id (str): YouTube video URL or video ID
-
-    Returns:
-        str | None: Video ID if found, else None
+    Extracts a YouTube video ID from a URL or returns it if it's already an ID.
     """
     if not url_or_id:
         return None
 
-    # Heuristic: YouTube video IDs are 11 characters (letters, digits, - and _)
+    # Direct ID
     if re.fullmatch(r"[a-zA-Z0-9_-]{11}", url_or_id):
         return url_or_id
 
     try:
-        parsed_url = urlparse(url_or_id)
+        parsed = urlparse(url_or_id)
     except Exception:
         return None
 
-    # Case 1: youtube.com/watch?v=xxxx
-    if parsed_url.hostname in ("www.youtube.com", "youtube.com"):
-        return parse_qs(parsed_url.query).get("v", [None])[0]
+    host = parsed.hostname or ""
+    path = parsed.path or ""
 
-    # Case 2: youtu.be/xxxx
-    if parsed_url.hostname == "youtu.be":
-        return parsed_url.path.lstrip("/")
+    # youtube.com/watch?v=xxxx
+    if "youtube.com" in host:
+        if path == "/watch":
+            return parse_qs(parsed.query).get("v", [None])[0]
+        # youtube.com/embed/xxxx or youtube.com/shorts/xxxx
+        match = re.match(r"^/(embed|shorts)/([a-zA-Z0-9_-]{11})$", path)
+        if match:
+            return match.group(2)
+
+    # youtu.be/xxxx
+    if "youtu.be" in host:
+        match = re.match(r"^/([a-zA-Z0-9_-]{11})$", path)
+        if match:
+            return match.group(1)
 
     return None

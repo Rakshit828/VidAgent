@@ -82,7 +82,6 @@ class PineconeClient:
             raise VectorDatabaseError()
         
         results = filtered_results['result']['hits']
-        print(f"Fetched context from Pinecone: ", results)
         return results
 
 
@@ -91,7 +90,6 @@ class PineconeClient:
         video_id = get_video_id(video_url_or_id)
         try:
             await self.index.delete(namespace=user_id, filter={"video_id": {"$eq": video_id}})
-            print("VIDEO DELETED")
         except Exception as e:
             print(e)
             raise VectorDatabaseError()

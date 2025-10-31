@@ -4,7 +4,7 @@ import {
   selectAccessToken,
   setAccessToken,
 } from "../features/authSlice";
-import { handleRefreshToken } from "../api/auth.js";
+import { handleTokenRefresh } from "../api/auth.js";
 import { useNavigate } from "react-router-dom";
 
 
@@ -17,10 +17,10 @@ const useStreaming = (onChunk) => {
 
   const accessToken = useSelector((state) => selectAccessToken(state));
   const dispatch = useDispatch();
-  
+
 
   const refreshAccessToken = useCallback(async () => {
-    const response = await handleRefreshToken();
+    const response = await handleTokenRefresh();
     if (response.success) return response.data;
     if (
       response.data?.error === "expired_jwt_token_error" &&
@@ -32,7 +32,7 @@ const useStreaming = (onChunk) => {
     throw new Error("Failed to refresh token");
   });
 
-  
+
   // --- Perform the streaming fetch ---
   const performStream = useCallback(async (url, token, options = {}) => {
     const controller = new AbortController();
@@ -90,7 +90,7 @@ const useStreaming = (onChunk) => {
 
           const chunk = decoder.decode(value, { stream: true });
           accumulatedText += chunk;
-          
+
           // Call onChunk callback if provided
           if (onChunk) {
             onChunk(accumulatedText);
@@ -106,7 +106,7 @@ const useStreaming = (onChunk) => {
         // Set streaming to false AFTER final callback
         setIsStreaming(false);
         return { success: true, data: accumulatedText };
-        
+
       } catch (err) {
         // Set streaming to false on error
         setIsStreaming(false);

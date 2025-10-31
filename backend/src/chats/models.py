@@ -28,6 +28,8 @@ class Chats(SQLModel, table=True):
             nullable=False
         )
     )
+
+    # These are the relationship attributes used to join the ORM level classes
     user: Optional["Users"] = Relationship(back_populates="chats")
 
     questions_answers: List["QuestionsAnswers"] = Relationship(

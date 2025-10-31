@@ -2,9 +2,10 @@ import { X, Sparkles, Youtube } from "lucide-react";
 import { useState } from "react";
 import Spinner from "./Spinner.jsx";
 import { useDispatch } from "react-redux";
-import useApiCall from "../../hooks/useApiCall.js"
+import useCall from "../../hooks/useCall.js"
 import { createNewChat } from "../../api/chats.js";
 import { addNewChat, initializeCurrentChat } from "../../features/chatsSlice.js";
+import { useToast } from "../../context/ToastContext.jsx";
 
 
 const NewChatModal = ({ isOpen, onClose }) => {
@@ -12,12 +13,14 @@ const NewChatModal = ({ isOpen, onClose }) => {
     const [videoURL, setVideoURL] = useState("")
     const dispatch = useDispatch()
 
+    const toast = useToast();
+
     const {
         isLoading,
         isError,
         errorMsg,
         handleApiCall
-    } = useApiCall(createNewChat)
+    } = useCall(createNewChat)
 
     if (!isOpen) return null;
 
@@ -27,7 +30,6 @@ const NewChatModal = ({ isOpen, onClose }) => {
             title: title,
             youtubeVideoUrl: videoURL
         }
-        console.log("New chat model chat data: ", chatData)
         const response = await handleApiCall([chatData])
         if (response.success) {
             dispatch(addNewChat(response.data))
@@ -36,11 +38,14 @@ const NewChatModal = ({ isOpen, onClose }) => {
             onClose()
             response.data['type'] = "newchat"
             dispatch(initializeCurrentChat(response.data))
+            toast.success("Chat created successfully")
+        } else {
+            toast.error("Failed to create new chat.")
         }
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+        <div className="fixed inset-0 z-[51] flex items-center justify-center p-4 animate-fade-in">
             {/* Blurred background */}
             <div
                 className="absolute inset-0 backdrop-blur-md bg-black/60 animate-fade-in"

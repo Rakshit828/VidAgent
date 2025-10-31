@@ -6,13 +6,16 @@ import { useState } from "react";
 import CollectionUrl from "./CollectionUrl";
 import LogoutButton from "./LogoutButton";
 import { userLogOut } from "../../api/auth";
-import useApiCall from "../../hooks/useApiCall";
+import useCall from "../../hooks/useCall";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../../context/ToastContext";
 
 
 const Sidebar = ({ sidebar, setSidebar, isMobile }) => {
   const [isChatModelOpen, setIsChatModelOpen] = useState(false);
   const navigate = useNavigate()
+  const toast = useToast()
+
   const handleCreateNewChat = () => {
     setIsChatModelOpen(true);
   };
@@ -24,7 +27,7 @@ const Sidebar = ({ sidebar, setSidebar, isMobile }) => {
   const {
     isLoading: isLogoutLoading,
     handleApiCall: handleApiCallLogout,
-  } = useApiCall(userLogOut, "", false)
+  } = useCall(userLogOut)
 
   return (
     <>
@@ -125,8 +128,13 @@ const Sidebar = ({ sidebar, setSidebar, isMobile }) => {
         <LogoutButton
           sidebar={sidebar}
           onLogout={async () => {
-            await handleApiCallLogout([])
-            navigate("/login", { replace: true })
+            const response = await handleApiCallLogout([])
+            if (response.success) {
+              toast.success("Logged Out Successfully")
+              navigate("/login", { replace: true })
+            } else {
+              toast.error("Logout Failed")
+            }
           }}
           isLoading={isLogoutLoading}
         />

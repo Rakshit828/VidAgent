@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
-import authReducer, { initialState as authInitialState } from "../features/authSlice.js";
+import authReducer from "../features/authSlice.js";
 import chatReducer from "../features/chatsSlice.js";
+import { setRequiresRelogin, setAccessToken } from "../features/authSlice.js";
 
 export const store = configureStore({
   reducer: {
@@ -8,3 +9,19 @@ export const store = configureStore({
     chats: chatReducer
   }
 });
+
+
+
+// Helper functions
+
+export function getAccessTokenHelper() {
+  return store.getState().auth.accessToken
+}
+
+export function setRequiresReloginHelper(value){
+  store.dispatch(setRequiresRelogin(value))
+}
+
+export function setAccessTokenHelper(payload){
+  store.dispatch(setAccessToken(payload))
+}

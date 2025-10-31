@@ -1,32 +1,24 @@
-
 # Application development
-fastapi
-uvicorn
 fastapi[standard]
+uvicorn
+pydantic
+pydantic-settings
 sqlmodel
-passlib
+sqlalchemy
+passlib[argon2]  # Use Argon2 instead of bcrypt to avoid bcrypt issues
 pyjwt
 asyncpg
-bcrypt
 fastapi-mail
 itsdangerous
-
-
-# Migrations
-alembic
-
+python-dotenv
+httpx
 
 # AI Features
 langchain
 langchain_community
-huggingface
 langchain-groq
-langchain-google-genai
-langchain-huggingface
-youtube-transcript-api
-huggingface
-sentence-transformers
-chromadb
-langchain_chroma
+pinecone[asyncio]
+
+langgraph
 
 

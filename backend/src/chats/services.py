@@ -2,7 +2,6 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 from sqlalchemy.orm import selectinload
 from fastapi import  HTTPException, status
-from langchain_chroma import Chroma
 
 from typing import Dict
 

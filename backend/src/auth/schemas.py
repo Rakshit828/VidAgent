@@ -12,7 +12,6 @@ class UserCreateSchema(BaseModel):
     password: str 
 
 
-
 class UserLogInSchema(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8, max_length=40)
@@ -31,6 +30,9 @@ class UserResponseSchema(BaseModel):
         orm_model = True
 
 
+class RegisterAccountResponseSchema(BaseModel):
+    data: UserResponseSchema
+    message: str
 
 class TokensSchema(BaseModel):
     access_token: str

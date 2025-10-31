@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { PenBox, Sparkles } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import useApiCall from "../../hooks/useApiCall";
+import useCall from "../../hooks/useCall";
 import { loadAllChats } from "../../api/chats";
 import { initializeUserChats } from "../../features/chatsSlice";
 import ThreeDotLoader from "./ThreeDotLoader";
 import Chat from "./Chat.jsx";
 import { selectAccessToken } from "../../features/authSlice.js";
+
 
 const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
   const userChats = useSelector((state) => state.chats.userChats);
@@ -17,10 +18,9 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
 
   const dispatch = useDispatch();
 
-  const { isLoading, isError, errorMsg, loadingMsg, handleApiCall } = useApiCall(
+  const { isLoading, isError, errorMsg, loadingMsg, handleApiCall } = useCall(
     loadAllChats,
-    "Loading Chats",
-    true
+    "Loading Chats"
   );
 
   useEffect(() => {
@@ -35,7 +35,7 @@ const SidebarContent = ({ sidebar, isMobile, handleCreateNewChat }) => {
     };
 
     handleLoadAllChats();
-  }, [accessToken]);
+  }, [accessToken, isError, handleApiCall, dispatch]);
 
   return (
     <div className="flex flex-col flex-1 overflow-y-auto relative z-0 custom-dark-scrollbar px-3 py-2">

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { MoreHorizontal, Edit, Trash2 } from "lucide-react";
-import useApiCall from "../../hooks/useApiCall";
+import useCall from "../../hooks/useCall.js";
 import { getCurrentChatData, deleteChat, updateChat } from "../../api/chats";
 import { initializeCurrentChat, deleteUserChat, updateUserChats } from "../../features/chatsSlice";
 import ConfirmationModal from "./ConfirmationModal";
@@ -21,10 +21,11 @@ const Portal = ({ children }) => {
     return mounted ? createPortal(children, container) : null;
 };
 
+
 const Chat = ({ chatID, chatTitle, isSelected, dispatch }) => {
-    const { handleApiCall: handleSelectApiCall, isLoading: isLoadingSelect } = useApiCall(getCurrentChatData);
-    const { handleApiCall: handleDeleteApiCall, isLoading: isDeleting } = useApiCall(deleteChat, "Deleting chat");
-    const { handleApiCall: handleRenameApiCall, isLoading: isRenaming } = useApiCall(updateChat, "Renaming chat");
+    const { handleApiCall: handleSelectApiCall, isLoading: isLoadingSelect } = useCall(getCurrentChatData);
+    const { handleApiCall: handleDeleteApiCall, isLoading: isDeleting } = useCall(deleteChat, "Deleting chat");
+    const { handleApiCall: handleRenameApiCall, isLoading: isRenaming } = useCall(updateChat, "Renaming chat");
 
     const [menuOpen, setMenuOpen] = useState(false);
     const [modalOpen, setModalOpen] = useState(false);

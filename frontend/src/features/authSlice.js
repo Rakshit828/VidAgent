@@ -3,9 +3,12 @@ import { snakeKeysToCamel } from "../helpers/chatHelpers";
 
 export const initialState = {
     accessToken: "",
+    currentEmail: "",
+    requiresRelogin: false,
 };
 
 export const selectAccessToken = state => state.auth.accessToken
+export const selectEmail = state => state.auth.currentEmail
 
 const authSlice = createSlice({
     name: "auth",
@@ -18,10 +21,18 @@ const authSlice = createSlice({
 
         clearTokens: (state) => {
             state.accessToken = ""
+        },
+
+        setCurrentEmail: (state, action) => {
+            state.currentEmail = action.payload.email
+        },
+
+        setRequiresRelogin: (state, action) => {
+            state.requiresRelogin = action.payload
         }
     },
 });
 
 
-export const { setAccessToken } = authSlice.actions;
+export const { setAccessToken, setCurrentEmail, clearPassword, setRequiresRelogin } = authSlice.actions;
 export default authSlice.reducer;
