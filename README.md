@@ -198,8 +198,7 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 ## Future Improvements
 
 ### Planned Features
-* **Multi-language support** for international users
-* **Video timestamps** - Link answers to specific video moments
+* **Enhanced Multi-language support** for international users
 * **Export chat history** to PDF or markdown
 * **Collaborative chats** - Share chats with other users
 * **Voice input/output** for questions and answers
@@ -212,12 +211,11 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 
 ### AI Enhancements
 * **Support for multiple LLM providers** (Claude, Gemini, local models)
-* **Custom fine-tuning** for domain-specific content
-* **Semantic search** improvements with better embeddings
 * **Multi-modal support** - Analyze video frames and audio
-* **Context-aware responses** using chat history
+* **Context-aware responses** using chat history for making the chatbot conversational
+* **Implementation of Long-Term/Short-Term memory** for the prefrences
 * **Source citations** with exact timestamp references
-
+* **Transforming into Agentic Application** having multiple tool calling features
 ---
 
 ## Contact
