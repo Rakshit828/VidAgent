@@ -3,7 +3,6 @@ fastapi[standard]
 uvicorn
 pydantic
 pydantic-settings
-sqlmodel
 sqlalchemy
 passlib[argon2]  # Use Argon2 instead of bcrypt to avoid bcrypt issues
 pyjwt
@@ -13,6 +12,9 @@ itsdangerous
 python-dotenv
 httpx
 
+# Emailing
+sib_api_v3_sdk
+
 # AI Features
 langchain
 langchain_community
@@ -20,5 +22,7 @@ langchain-groq
 pinecone[asyncio]
 
 langgraph
+
+alembic
 
 

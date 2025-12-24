@@ -5,9 +5,9 @@ from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 
 from src.config import CONFIG
-from src.ai.components import initialize_ai_components, Components
-from src.db.main import init_db
-from src.ai.pinecone_vdb import init_pinecone_db
+from src.ai.components import Components
+
+from src.ai.agent import Agent
 
 load_dotenv()
 
@@ -15,16 +15,10 @@ VERSION = 'v1'
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await init_db()
-    pinecone_db = await init_pinecone_db()
-    ai_components: Components =  await initialize_ai_components(
-        ai_model="openai/gpt-oss-120b", 
-        temperature=0.7,
-        vector_db = pinecone_db
-    )
+    components: Components = await Components.init()
 
-    app.state.ai_components = ai_components
-
+    app.state.agent = Agent()
+    app.state.components = components
     yield
 
 

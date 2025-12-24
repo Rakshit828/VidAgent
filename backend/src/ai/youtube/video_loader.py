@@ -1,29 +1,44 @@
-from typing import Dict, Any
+from typing import List
 import httpx
 from fastapi import HTTPException
-from .exceptions import UnexpectedErrorOccurredInTranscriptError
+from ..exceptions import UnexpectedErrorOccurredInTranscriptError
 from src.config import CONFIG
+from src.logging_config import logger
+from pydantic import BaseModel
 
 HEADERS = {
     "X-RapidAPI-Key": CONFIG.RAPID_API_KEY,
     "X-RapidAPI-Host": CONFIG.RAPID_API_HOST
 }
 
-async def load_video_transcript(video_data: Dict[str, str]) -> Dict[str, str]:
-    video_id = video_data["video_id"]
+class TranscriptResponse(BaseModel):
+    text: str
+    duration: float
+    offset: float
+    lang: str
+
+class YoutubeApiResponse(BaseModel):
+    success: bool
+    transcript: List[TranscriptResponse]
+
+
+
+async def load_video_transcript(video_id: str) -> YoutubeApiResponse:
     url = f"https://youtube-transcript3.p.rapidapi.com/api/transcript?videoId={video_id}"
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(url=url, headers=HEADERS)
             response.raise_for_status()
-            data = response.json()
+            api_data = response.json()
 
-            if data.get("success"):
-                transcript_text = format_transcript(data)
-                video_data["transcript_text"] = transcript_text
-                return video_data
+            if api_data.get("success"):
+                logger.info("Youtube Transcript Has been fetched successfully")
+                youtube_api_response = YoutubeApiResponse(**api_data)
+                return youtube_api_response
             else:
+                logger.info("Error Occurred during Video Load")
+                logger.info(f"The api_data is {api_data}")
                 raise UnexpectedErrorOccurredInTranscriptError()
 
     # ---- Network-level errors ----
@@ -64,10 +79,3 @@ async def load_video_transcript(video_data: Dict[str, str]) -> Dict[str, str]:
         print("I dont know")
         raise HTTPException(status_code=500, detail=f"Unexpected server error: {e}")
 
-
-def format_transcript(data: Dict[str, Any]) -> str:
-    transcript_list = data.get("transcript", [])
-    transcript_text_list = [
-        f"{item['offset']} {item['text']}" for item in transcript_list
-    ]
-    return " ".join(transcript_text_list)

@@ -3,7 +3,6 @@ import appLogo from "../../assets/appLogo.png";
 import SidebarContent from "./SidebarContent";
 import NewChatModal from "./NewChatModal";
 import { useState } from "react";
-import CollectionUrl from "./CollectionUrl";
 import LogoutButton from "./LogoutButton";
 import { userLogOut } from "../../api/auth";
 import useCall from "../../hooks/useCall";
@@ -114,8 +113,6 @@ const Sidebar = ({ sidebar, setSidebar, isMobile }) => {
             </button>
           )}
         </div>
-
-        <CollectionUrl sidebar={sidebar} />
 
         {/* Sidebar content */}
         <SidebarContent

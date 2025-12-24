@@ -5,3 +5,5 @@ src/ai/__pycache__
 src/auth/__pycache__
 src/chats/__pycache__
 chroma_db
+alembic.ini
+uv.lock

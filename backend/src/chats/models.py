@@ -1,60 +1,72 @@
-from sqlmodel import SQLModel, Field, Column, Relationship, text, func
-import sqlalchemy.dialects.postgresql as pg
-from sqlalchemy import ForeignKey
+from __future__ import annotations
+from typing import Optional, List, TYPE_CHECKING
 from uuid import UUID
-from datetime import datetime
-from typing import Optional, TYPE_CHECKING, List
 
+from sqlalchemy import ForeignKey, text, func, Index
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+import sqlalchemy.dialects.postgresql as pg
+
+from src.db.postgres_db import Base
 
 if TYPE_CHECKING:
     from src.auth.models import Users
 
-class Chats(SQLModel, table=True):
+
+class Chats(Base):
     __tablename__ = "chats"
 
-    uuid: UUID = Field(
-        sa_column=Column(
-            pg.UUID, primary_key=True, server_default=text("gen_random_uuid()")
-        )
-    )
-    title: str
-    youtube_video_url: str
-    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, server_default=func.now()))
-
-    user_uid: UUID = Field(
-        sa_column=Column(
-            pg.UUID,
-            ForeignKey("users.uuid", ondelete="CASCADE"),  # DB-level cascade
-            nullable=False
-        )
+    uuid: Mapped[UUID] = mapped_column(
+        pg.UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
     )
 
-    # These are the relationship attributes used to join the ORM level classes
-    user: Optional["Users"] = Relationship(back_populates="chats")
+    title: Mapped[str] = mapped_column(pg.VARCHAR(50), nullable=False)
+    youtube_video_url: Mapped[str] = mapped_column(pg.VARCHAR(50), nullable=False)
+    created_at: Mapped[Optional[str]] = mapped_column(pg.TIMESTAMP, server_default=func.now())
 
-    questions_answers: List["QuestionsAnswers"] = Relationship(
+    user_uid: Mapped[UUID] = mapped_column(
+        pg.UUID,
+        ForeignKey("users.uuid", ondelete="CASCADE"),
+        nullable=False,
+    )
+
+    __table_args__ = (
+        Index("idx_user_uid", "user_uid"),
+        Index("idx_chat_id", "uuid")
+    )
+
+    user: Mapped[Optional["Users"]] = relationship(back_populates="chats")
+    questions_answers: Mapped[List["QuestionsAnswers"]] = relationship(
         back_populates="chat",
-        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+        cascade="all, delete-orphan",
     )
 
 
-# ----------------- QuestionsAnswers -----------------
-class QuestionsAnswers(SQLModel, table=True):
+
+
+class QuestionsAnswers(Base):
     __tablename__ = "questionsandanswers"
 
-    uuid: UUID = Field(
-        sa_column=Column(
-            pg.UUID, primary_key=True, server_default=text("gen_random_uuid()")
-        )
+    uuid: Mapped[UUID] = mapped_column(
+        pg.UUID(as_uuid=True),
+        primary_key=True,
+        server_default=text("gen_random_uuid()"),
     )
-    query: str
-    answer: str
 
-    chat_uid: Optional[UUID] = Field(
-        sa_column=Column(
-            pg.UUID,
-            ForeignKey("chats.uuid", ondelete="CASCADE"),  # DB-level cascade
-            nullable=True
-        )
+    query: Mapped[Optional[str]] = mapped_column(pg.TEXT)
+    answer: Mapped[Optional[str]] = mapped_column(pg.TEXT)
+
+    chat_uid: Mapped[Optional[UUID]] = mapped_column(
+        pg.UUID,
+        ForeignKey("chats.uuid", ondelete="CASCADE"),
+        nullable=True,
     )
-    chat: Optional[Chats] = Relationship(back_populates="questions_answers")
+
+    __table_args__ = (
+        Index("idx_chat_uid", "chat_uid"), 
+    )
+
+
+    chat: Mapped[Optional[Chats]] = relationship(back_populates="questions_answers")
+    

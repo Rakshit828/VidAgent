@@ -2,7 +2,6 @@ import { useRef, useEffect, useState } from "react";
 import InputFieldsWrapper from "./InputFieldsWrapper.jsx";
 import ChatInput from "./ChatInput.jsx";
 import UrlInput from "./UrlInput.jsx";
-import FormattedResponse from "./FormattedResponse.jsx";
 import { User, Bot, Play } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { addNewQuestionsAnswers, updateLastAnswer } from "../../features/chatsSlice.js";
@@ -227,7 +226,7 @@ const ChatArea = () => {
                             Waiting for response...
                           </div>
                         ) : qa.answer ? (
-                          <MemoFormattedResponse text={qa.answer} />
+                          qa.answer
                         ) : (
                           <div className="text-gray-500">No response yet</div>
                         )}
@@ -264,8 +263,5 @@ const ChatArea = () => {
     </div>
   );
 };
-
-
-const MemoFormattedResponse = React.memo(FormattedResponse);
 
 export default ChatArea;

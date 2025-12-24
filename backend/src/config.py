@@ -9,7 +9,7 @@ class Config(BaseSettings):
     BACKEND_URL: str
     
     IS_DEV: bool
-
+    
     RAPID_API_KEY: str
     RAPID_API_HOST: str
 

@@ -3,8 +3,8 @@ from fastapi import Request, Depends
 from fastapi import HTTPException, status
 from .utils import decode_jwt_tokens
 from .services import AuthService
-from sqlmodel.ext.asyncio.session import AsyncSession
-from src.db.main import get_session
+from sqlalchemy.ext.asyncio.session import AsyncSession
+from src.db.postgres_db import get_session
 from .models import Users
 from .exceptions import (
     InvalidJWTTokenError

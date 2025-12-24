@@ -1,158 +1,47 @@
-from langchain_groq import ChatGroq
-from langchain_core.output_parsers import StrOutputParser
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.runnables import (
-    RunnableParallel,
-    RunnablePassthrough,
-    RunnableLambda,
-    RunnableSequence,
-)
-from langchain_core.prompts import PromptTemplate
-
-from typing import List, Dict
-import re
-import uuid
-
-from .youtube import load_video_transcript
-from .utils import format_docs
-from .pinecone_vdb import PineconeClient
+from typing import TypeAlias, Self
 
 
-class Chunker:
-    def __init__(self):
-        self.splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1200,
-            chunk_overlap=200,
-            separators=[r"\+?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?"],
-            is_separator_regex=True,
-        )
+from src.ai.youtube.transcript_preprocessor import TranscriptPreprocessor, TranscriptChunk
+from src.ai.youtube.video_loader import load_video_transcript, YoutubeApiResponse
+from src.ai.pinecone_vector_db.youtube_chunks import PineconeClient, init_pinecone_db
+from src.ai.utils import format_docs
+from src.ai.youtube.transcript_preprocessor import TranscriptPreprocessor
 
-    async def split_transcript_into_texts(self, video_data: dict[str, str]):
-        # The video data has keys : user_id, video_id, transcript_text
-        transcript_text = video_data.get("transcript_text")
-        video_id = video_data.get("video_id", 0)
-
-        splitted_transcript = self.splitter.split_text(text=transcript_text)
-
-        del video_data["transcript_text"]
-
-        cleaned_transcript = await self.preprocess_and_clean(
-            splitted_transcript, video_id
-        )
-
-        video_data.update({"splitted_transcript": cleaned_transcript})
-
-        return video_data  # (keys: user_id, video_id, splitted_transcript)
-
-    async def preprocess_and_clean(
-        self, splitted_transcript: List[str], video_id: str
-    ) -> List[Dict]:
-        processed_transcript = []
-        for chunk in splitted_transcript:
-            start_time_list = list(
-                map(
-                    float,
-                    re.findall(r"\+?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?", string=chunk),
-                )
-            )
-            cleaned_chunk = " ".join(
-                re.split(r"\+?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?", string=chunk)
-            )
-            start_time = int(round(start_time_list[0] / 60))
-            end_time = int(round(start_time_list[-1] / 60))
-            cleaned_chunk = (
-                cleaned_chunk
-                + f"\nThis chunk duration is {start_time} minutes to {end_time} minutes"
-            )
-
-            cleaned_chunk_data = {
-                "_id": str(uuid.uuid4()),
-                "chunk_text": cleaned_chunk,
-                "start_time": start_time,
-                "end_time": end_time,
-                "video_id": video_id,
-            }
-            processed_transcript.append(cleaned_chunk_data)
-        return processed_transcript
-
-
-class PromptPicker:
-    PROMPT = PromptTemplate(
-        template="""
-        You are given a YouTube video transcript as context.
-        Answer the query using only the information from the context.
-        Include the relevant timestamps mentioned in the context.
-        If multiple timestamps apply, list them side by side.
-        If the context is insufficient, clearly say so.
-        Respond clearly and naturally, in the same language as the query.
-
-        CONTEXT:
-        {context}
-
-        QUERY:
-        {user_query}
-    """,
-        input_variables=["context", "user_query"],
-    )
+ContextText: TypeAlias = str
 
 
 class Components:
     def __init__(
-        self, ai_model_name: str, temperature: float | int, vector_db: PineconeClient
+        self, vector_db: PineconeClient, transcript_preprocessor: TranscriptPreprocessor
     ):
-        print("Loading AI components")
-
-        self.llm1 = ChatGroq(model=ai_model_name, temperature=temperature)
-
-        self.llm2 = ChatGroq(model="openai/gpt-oss-20b", temperature=temperature)
-
-        self.llm_with_fallbacks = self.llm1.with_fallbacks([self.llm2])
-
         self.vector_db = vector_db
+        self.transcript_preprocessor = transcript_preprocessor
+    
+    @classmethod
+    async def init(cls) -> Self:
+        pinecone_client = await init_pinecone_db()
+        transcript_preprocessor = TranscriptPreprocessor()
+        return cls(pinecone_client, transcript_preprocessor)
 
-        self.chunker = Chunker()
-
-        self.prompts = PromptPicker()
-
-        self.parser = StrOutputParser()
-
-        self.chains = self.build_chains()
-
-        print("Loaded all AI components")
-
-    async def get_response_llm(self, prompt):
-        response = self.llm_with_fallbacks.astream(prompt)
-        async for chunk in response:
-            yield chunk.content
-
-    def build_chains(self):
-        load_store_chain = RunnableSequence(
-            RunnableLambda(load_video_transcript),
-            RunnableLambda(self.chunker.split_transcript_into_texts),
-            RunnableLambda(self.vector_db.upsert_records_into_vdb),
+    async def load_and_store_video(self, video_id: str, user_id: str):
+        """Loads the video transcript and stores it in the vector database."""
+        youtube_api_response: YoutubeApiResponse = await load_video_transcript(video_id=video_id)
+        transcript_data_chunks: list[TranscriptChunk] = await self.transcript_preprocessor.group_transcript_into_chunks(
+            transcript=youtube_api_response.transcript, video_id=video_id
+        )
+        video_records_data = {"user_id": user_id, "records": transcript_data_chunks}
+        await self.vector_db.upsert_records_into_vdb(
+            video_records_data=video_records_data
         )
 
-        parallel_chain = RunnableParallel(
-            {
-                "context": RunnableLambda(self.vector_db.retrieve_context)
-                | RunnableLambda(format_docs),
-                "user_query": RunnablePassthrough(),
-            }
+    async def load_cleaned_relevant_context(
+        self, query: str, video_id: str, user_id: str, k: int
+    ) -> ContextText:
+        """Loads the relevant context from the vector database."""
+        retrieved_chunks = await self.vector_db.retrieve_context(
+            query=query, user_id=user_id, video_id=video_id, k=k
         )
-
-        retriever_prompt_chain = parallel_chain | self.prompts.PROMPT
-
-        return {
-            "load_store_chain": load_store_chain,
-            "retriever_prompt_chain": retriever_prompt_chain,
-        }
+        context_text = format_docs(retrieved_docs=retrieved_chunks)
+        return context_text
 
 
-async def initialize_ai_components(
-    vector_db: PineconeClient,
-    ai_model="meta-llama/llama-4-scout-17b-16e-instruct",
-    temperature=0.7,
-):
-    return Components(
-        ai_model_name=ai_model, temperature=temperature, vector_db=vector_db
-    )

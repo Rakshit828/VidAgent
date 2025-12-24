@@ -1,16 +1,18 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio.session import AsyncSession
 
 from .schemas import CreateQASchema, ResponseQASchema, CreateChatSchema, UpdateChatSchema, ResponseChatSchema, ResponseCurrentChatSchema
 from .services import chat_service
-from src.db.main import get_session
+from src.db.postgres_db import get_session
 from src.auth.dependencies import AccessTokenBearer
 from typing import Dict, List
 from src.ai.exceptions import (
     TranscriptDoesNotExistError,
     TranscriptAlreadyExistError
 )
+from src.ai.agent import AgentContext, AgentState
+
 
 chats_router = APIRouter()
 
@@ -126,14 +128,15 @@ async def generate_tanscript(
     decoded_token_data: Dict = Depends(AccessTokenBearer())
 ):
     user_id = decoded_token_data['sub']
-    transcript_exists = await request.app.state.ai_components.vector_db.check_for_transcript(user_id, video_id)
+    transcript_exists = await request.app.state.components.vector_db.check_for_transcript(user_id, video_id)
     if  transcript_exists:
         raise TranscriptAlreadyExistError()
     data = {
         "user_id": user_id,
         "video_id": video_id
     }
-    await request.app.state.ai_components.chains['load_store_chain'].ainvoke(data)
+
+    await request.app.state.components.load_and_store_video(**data)
 
     return JSONResponse(
         content="Transcript Generated Successfully"
@@ -150,20 +153,30 @@ async def get_response_from_llm(
 ):
     user_id = decoded_token_data['sub']
 
-    transcript_exists = await request.app.state.ai_components.vector_db.check_for_transcript(user_id, video_id)
+    transcript_exists = await request.app.state.components.vector_db.check_for_transcript(user_id, video_id)
     if not transcript_exists:
         raise TranscriptDoesNotExistError()
     
-    data = {
-        "query": query,
+    context = {
+        "components": request.app.state.components,
         "user_id": user_id,
         "video_id": video_id,
-        "k": 5,
+        "chat_id": 'adfld7fadfdsf'
     }
 
-    prompt = await request.app.state.ai_components.chains['retriever_prompt_chain'].ainvoke(data)
+    input_state = {
+        "user_query": query
+    }
 
-    return StreamingResponse(
-        request.app.state.ai_components.get_response_llm(prompt),
-        media_type="plain/text"
-    )
+    async for mode, chunk in request.app.state.agent.run_agent(input_state=input_state, context=context):
+        if mode == 'updates':
+            print('Update : ', chunk)
+        if mode == 'messages':
+            print(chunk[0].content, end='', flush=True)
+
+    return "Agent is running"
+
+    # return StreamingResponse(
+    #     request.app.state.agent.run_agent(input_state=input_state, context=context),
+    #     media_type="event/stream"
+    # )

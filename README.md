@@ -4,9 +4,14 @@ A full‑stack RAG (Retrieval-Augmented Generation) web application that lets us
 
 ---
 
-## Screenshots
+## Live Demo
 
 Watch the application in action:
+[ChatTube-AI](https://chattube-ai.netlify.app/)
+
+---
+
+## Screenshots
 
 <img width="1920" height="1080" alt="Screenshot (171)" src="https://github.com/user-attachments/assets/9f7f1d8a-e21d-4c34-a79c-5e40b44e596d" />
 <img width="1920" height="1080" alt="Screenshot (170)" src="https://github.com/user-attachments/assets/b670f8dc-601a-4c0d-b3fa-391dd672547c" />
@@ -90,6 +95,7 @@ Watch the application in action:
 * **Python** >= 3.10
 * **PostgreSQL** running locally or via Docker
 * **OpenAI API Key** (or other LLM provider)
+* **Groq API Key** for LLM services
 * **Huggingface API Key** (for running local embedding models)
 * **Pinecone API Key** (for vector database)
 
@@ -103,7 +109,7 @@ GROQ_API_KEY=
 HUGGINGFACE_API_KEY=
 PINECONE_API_KEY=
 PINECONE_ENVIRONMENT=
-JWT_SECRET_KEY='e64e227cba901e8e22737cc6a07b922a'
+JWT_SECRET_KEY=your_jwt_secret_key
 JWT_ALGORITHM=HS256
 
 ## Optional Configs

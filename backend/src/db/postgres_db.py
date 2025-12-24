@@ -1,12 +1,9 @@
-from sqlmodel import SQLModel, select
-from sqlmodel.ext.asyncio.session import AsyncSession
-
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.config import CONFIG
 
-from src.auth.models import Users
-from src.chats.models import Chats, QuestionsAnswers
+Base = declarative_base()
 
 # Async engine
 async_engine = create_async_engine(
@@ -20,11 +17,6 @@ Session = sessionmaker(
     class_=AsyncSession,
     expire_on_commit=False,
 )
-
-async def init_db():
-    async with async_engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
-            
             
 # Dependency for FastAPI
 async def get_session():

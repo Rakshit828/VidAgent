@@ -1,5 +1,5 @@
-from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlmodel import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from fastapi import BackgroundTasks
 from .models import Users
 from .schemas import UserCreateSchema, UserLogInSchema
@@ -39,21 +39,21 @@ class AuthService:
         """Returns the user with the respective email"""
 
         statement = select(Users).where(Users.uuid == user_uid)
-        result = await session.exec(statement)
+        result = await session.execute(statement)
         result = result.first()
         return result
 
-    async def get_user_by_email(self, email: str, session: AsyncSession):
+    async def get_user_by_email(self, email: str, session: AsyncSession) -> Users | None:
         """Returns the user with the respective email"""
 
         statement = select(Users).where(Users.email == email)
-        result = await session.exec(statement)
-        result = result.first()  # We cannot do .first() two times in the same code
+        result = await session.execute(statement)
+        result: Users | None = result.scalar_one_or_none()
         return result
     
     async def delete_not_verified_users(self, session: AsyncSession):
         statement = select(Users).where(Users.is_verified == False)
-        result = await session.exec(statement)
+        result = await session.execute(statement)
         for user in result.all():
             await session.delete(user)
         await session.commit()
@@ -90,8 +90,8 @@ class AuthService:
         if not user:
             raise InvalidEmailError()
 
-        if not user.is_verified:
-            raise EmailNotVerifiedError()
+        # if not user.is_verified:
+        #     raise EmailNotVerifiedError()
 
         password = user_data_dict.get("password")
         hashed_password = user.hashed_password

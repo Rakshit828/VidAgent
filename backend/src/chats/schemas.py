@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, field_validator
-from src.utils.utils import get_video_id
+from pydantic import BaseModel, Field, field_validator, ConfigDict
+from src.utils import get_video_id
 from uuid import UUID
 from typing import Optional, Any, List
 from datetime import datetime
@@ -47,8 +47,7 @@ class ResponseChatSchema(BaseModel):
     youtube_video_url: str
     created_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ResponseQASchema(BaseModel):
