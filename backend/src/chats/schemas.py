@@ -56,7 +56,7 @@ class ResponseQASchema(BaseModel):
     chat_uid: UUID
 
 
-class ResponseCurrentChatSchema(BaseModel):
+class ResponseChatDataSchema(BaseModel):
     selected_chat_id: str
     youtube_video_url: str
     is_transcript_generated: bool = False

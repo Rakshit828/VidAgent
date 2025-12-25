@@ -1,132 +1,124 @@
-# errors.py
-from fastapi import HTTPException, status
+from fastapi import status
+from src.app_responses import ErrorResponse, T
 
 
-def make_error_detail(error_name: str, message: str):
-    return {"error": error_name, "message": message}
-
-class EmailValidationError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=make_error_detail("email_validation_error", "Email is invalid."),
-            headers=headers,
-        )
-
-# Authentication and Token Errors
-class ExpiredAccessTokenError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=make_error_detail(
-                "expired_access_token_error", "Access token has expired."
-            ),
-            headers=headers,
-        )
+class InvalidTokenSchemaError(ErrorResponse[T]):
+    status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
+    status: str = "error"
+    error: str = "invalid_token_schema_error"
+    message: str = "Given dictionary is invalid for the tokens setup in cookies"
+    data: T | None = None
 
 
-class ExpiredRefreshTokenError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=make_error_detail(
-                "expired_refresh_token_error", "Session Expired. Please Login again"
-            ),
-            headers=headers,
-        )
+# Authentication-related Errors
+class EmailValidationError(ErrorResponse[T]):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    status: str = "error"
+    error: str = "invalid_email_error"
+    message: str = "Entered Email is Invalid"
+    data: T | None = None
 
-class InvalidJWTTokenError(HTTPException):
-    def __init__(
-        self,
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=make_error_detail(
-            error_name="invalid_jwt_token_error",
-            message="Unauthorized. Please Login Again.",
-        ),
-        headers=None,
-    ):
-        super().__init__(status_code, detail, headers)
 
+class ExpiredAccessTokenError(ErrorResponse[T]):
+    status_code: int = status.HTTP_401_UNAUTHORIZED
+    status: str = "error"
+    error: str = "expired_access_token_error"
+    message: str = "Access token has expired"
+    data: T | None = None
+
+
+class ExpiredRefreshTokenError(ErrorResponse[T]):
+    status_code: int = status.HTTP_401_UNAUTHORIZED
+    status: str = "error"
+    error: str = "expired_refresh_token_error"
+    message: str = "Refresh token has expired"
+    data: T | None = None
+
+
+class InvalidJWTTokenError(ErrorResponse[T]):
+    status_code: int = status.HTTP_401_UNAUTHORIZED
+    status: str = "error"
+    error: str = "invalid_jwt_token_error"
+    message: str = "JWT token is invalid"
+    data: T | None = None
 
 
 # User-related Errors
-class InvalidEmailError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=make_error_detail("invalid_email_error", "Email not found."),
-            headers=headers,
-        )
+class InvalidEmailError(ErrorResponse[T]):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    status: str = "error"
+    error: str = "invalid_email_error"
+    message: str = "Entered email is invalid"
+    data: T | None = None
 
 
-class EmailNotVerifiedError(HTTPException):
-    def __init__(self, headers = None):
-        super().__init__(
-            status_code = status.HTTP_401_UNAUTHORIZED,
-            detail = make_error_detail("email_not_verified_error", "Email is not verified"),
-            headers=headers
-        )
+class EmailNotFoundError(ErrorResponse[T]):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    status: str = "error"
+    error: str = "email_not_found_error"
+    message: str = "Email is not registered. Please register first."
+    data: T | None = None
 
 
-class EmailAlreadyExistsError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=make_error_detail(
-                "email_already_exists_error", "Email already exists."
-            ),
-            headers=headers,
-        )
+class EmailNotVerifiedError(ErrorResponse[T]):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    status: str = "error"
+    error: str = "email_not_verified_error"
+    message: str = "Email is not verified"
+    data: T | None = None
 
 
-class InvalidPasswordError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=make_error_detail("invalid_password_error", "Invalid password."),
-            headers=headers,
-        )
+class EmailAlreadyExistsError(ErrorResponse[T]):
+    status_code: int = status.HTTP_409_CONFLICT
+    status: str = "error"
+    error: str = "email_already_exists_error"
+    message: str = "Email already exists"
+    data: T | None = None
 
 
-class UserNotActiveError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=make_error_detail(
-                "user_not_active_error", "User account is not active."
-            ),
-            headers=headers,
-        )
+class InvalidPasswordError(ErrorResponse[T]):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    status: str = "error"
+    error: str = "invalid_password_error"
+    message: str = "Entered password is invalid"
+    data: T | None = None
 
 
-class AccountLockedError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_423_LOCKED,
-            detail=make_error_detail("account_locked_error", "Account is locked."),
-            headers=headers,
-        )
+class UserNotActiveError(ErrorResponse[T]):
+    status_code: int = status.HTTP_403_FORBIDDEN
+    status: str = "error"
+    error: str = "user_not_active_error"
+    message: str = "User account is not active"
+    data: T | None = None
+
+
+class UserNotFoundError(ErrorResponse[T]):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    status: str = "error"
+    error: str = "user_not_found_error"
+    message: str = "User account is not found"
+    data: T | None = None
+
+class AccountLockedError(ErrorResponse[T]):
+    status_code: int = status.HTTP_423_LOCKED
+    status: str = "error"
+    error: str = "account_locked_error"
+    message: str = "User account is locked"
+    data: T | None = None
 
 
 # Access Control Errors
-class PermissionDeniedError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=make_error_detail(
-                "permission_denied_error",
-                "You do not have permission to perform this action.",
-            ),
-            headers=headers,
-        )
+class PermissionDeniedError(ErrorResponse[T]):
+    status_code: int = status.HTTP_403_FORBIDDEN
+    status: str = "error"
+    error: str = "permission_denied_error"
+    message: str = "You do not have permission to perform this action"
+    data: T | None = None
 
 
-class TooManyRequestsError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=make_error_detail(
-                "too_many_requests_error", "Too many requests. Please try again later."
-            ),
-            headers=headers,
-        )
+class TooManyRequestsError(ErrorResponse[T]):
+    status_code: int = status.HTTP_429_TOO_MANY_REQUESTS
+    status: str = "error"
+    error: str = "too_many_requests_error"
+    message: str = "Too many requests. Slow down."
+    data: T | None = None

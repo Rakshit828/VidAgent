@@ -10,74 +10,67 @@ from .schemas import (
     UserLogInSchema,
     AccessTokenSchema,
     EmailModel,
+    TokensSchema,
 )
 from .services import AuthService, EmailService
-from .dependencies import RefreshTokenBearer, admin_checker
+from .dependencies import RefreshTokenBearer, admin_checker, TokensInjector
 from .utils import create_jwt_tokens, decode_url_safe_token
 from src.mail_service import mail, create_message
+from src.app_responses import SuccessResponse
 
 
 REFRESH_TOKEN_EXPIRY_SECONDS = CONFIG.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60
+ACCESS_TOKEN_EXPIRY_MINUTES = CONFIG.ACCESS_TOKEN_EXPIRY_MINUTES * 60
 
 auth_routes = APIRouter()
 auth_service = AuthService()
 email_service = EmailService()
-refresh_token_bearer = RefreshTokenBearer(name="refresh_token")
+tokens_injector = TokensInjector()
+
+refresh_token_bearer = RefreshTokenBearer()
 
 
 @auth_routes.post(
     "/signup",
-    response_model=UserResponseSchema,
+    response_model=SuccessResponse[UserResponseSchema],
     status_code=status.HTTP_201_CREATED,
 )
 async def create_account(
     user_data: UserCreateSchema,
     background_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_session),
-) -> UserResponseSchema:
-    
+) -> SuccessResponse[UserResponseSchema]:
+
     user = await auth_service.make_account(user_data=user_data, session=session)
-    
-    await email_service.verification_email(email=user.email, background_tasks=background_tasks)
 
-    return user
+    await email_service.verification_email(
+        email=user.email, background_tasks=background_tasks
+    )
+
+    return SuccessResponse[UserResponseSchema](
+        message="Account Created Successfully.",
+        status_code=status.HTTP_201_CREATED,
+        data=user
+    )
 
 
-
-@auth_routes.post(
-    "/login", response_model=AccessTokenSchema, status_code=status.HTTP_200_OK
-)
+@auth_routes.post("/login", response_model=SuccessResponse[TokensSchema], status_code=status.HTTP_200_OK)
 async def login(
     response: Response,
     user_data: UserLogInSchema,
     session: AsyncSession = Depends(get_session),
-) -> AccessTokenSchema:
+) -> SuccessResponse[TokensSchema]:
 
     tokens = await auth_service.log_in_user(user_data, session)
-
-    if CONFIG.IS_DEV:
-        response.set_cookie(
-            path="/",
-            key="refresh_token",
-            value=tokens.get("refresh_token"),
-            httponly=True,
-            secure=False,
-            samesite="lax",
-            max_age=REFRESH_TOKEN_EXPIRY_SECONDS,
-        )
-
-    else:
-        response.set_cookie(
-            path="/",
-            key="refresh_token",
-            value=tokens.get("refresh_token"),
-            httponly=True,
-            secure=True,
-            samesite="none",
-            max_age=REFRESH_TOKEN_EXPIRY_SECONDS,
-        )
-    return {"access_token": tokens.get("access_token")}
-
+    tokens = TokensSchema(**tokens)
+    await tokens_injector.set_tokens_as_cookies(
+        response=response, tokens=tokens, is_login=True
+    )
+    return SuccessResponse[TokensSchema](
+        message="Logged In Successfully.",
+        status_code=status.HTTP_200_OK,
+        data=tokens
+    )
 
 
 @auth_routes.get("/logout")
@@ -94,24 +87,35 @@ async def logout_user():
     return response
 
 
-@auth_routes.get("/refresh", response_model=AccessTokenSchema)
+@auth_routes.get("/refresh", response_model=SuccessResponse[AccessTokenSchema])
 async def refresh_access_token(
+    response: Response,
     token_data: dict = Depends(refresh_token_bearer),
-) -> AccessTokenSchema:
+) -> SuccessResponse[AccessTokenSchema]:
 
     user_uuid = token_data["sub"]
     role = token_data["role"]
-    new_access_token = await create_jwt_tokens(
+    access_token = await create_jwt_tokens(
         user_uuid=user_uuid, role=role, is_login=False
     )
-    return new_access_token
+    access_token = AccessTokenSchema(access_token=access_token)
+    tokens_injector.set_tokens_as_cookies(
+        response=response, tokens=access_token, is_login=False
+    )
+
+    return SuccessResponse[AccessTokenSchema](
+        message="Access Token Refreshed Successfully.",
+        status_code=status.HTTP_200_OK,
+        data=access_token.model_dump(),
+    )
+
+
 
 
 @auth_routes.get("/get-verification-email/{email}")
 async def get_verification_email(email: str, background_tasks: BackgroundTasks):
     await email_service.verification_email(email, background_tasks)
     return True
-
 
 
 @auth_routes.get("/verify-email")
@@ -129,9 +133,8 @@ async def verify_email(
     return RedirectResponse(url=f"{CONFIG.FRONTEND_URL}/verify/login")
 
 
-
-
 # ------------- Dummy Routes For Testing -----------------------------------------
+
 
 @auth_routes.post("/sendmail")
 async def send_mail(emails: EmailModel):

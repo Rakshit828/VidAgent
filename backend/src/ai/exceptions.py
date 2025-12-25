@@ -1,78 +1,50 @@
-from fastapi import HTTPException, status
-from src.auth.exceptions import make_error_detail
+from src.app_responses import ErrorResponse, T
+from fastapi import status
 
+class VectorDatabaseError(ErrorResponse[T]):
+    status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
+    message: str = "Vector Database Error"
+    error: str = "vector_database_error"
+    data: T | None = None
 
-class VectorDatabaseError(HTTPException):
-    def __init__(
-        self, 
-        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
-        message = "An unexpected server error during video related task was occurred",
-        headers = None
-    ):
-        self.detail = make_error_detail(error_name="vector_database_error", message=message)
-        super().__init__(status_code, self.detail, headers)
+class RetrieverError(ErrorResponse[T]):
+    status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
+    message: str = "An unexpected server error during video related task occurred"
+    error: str = "retriever_error"
+    data: T | None = None
 
+class EnglishTranscriptNotFoundError(ErrorResponse[T]):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    message: str = "The given video does not support English."
+    error: str = "english_transcript_not_found_error"
+    data: T | None = None
 
-class RetrieverError(HTTPException):
-    def __init__(
-        self, 
-        status_code = status.HTTP_500_INTERNAL_SERVER_ERROR, 
-        detail = make_error_detail(error_name="retriever_error", message="An unexpected server error during video related task was occurred"),
-        headers = None
-    ):
-        super().__init__(status_code, detail, headers)
+class TranscriptNotAllowedError(ErrorResponse[T]):
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    message: str = "Video is not supported for chatting."
+    error: str = "transcript_not_allowed_error"
+    data: T | None = None
 
+class VideoNotFoundError(ErrorResponse[T]):
+    status_code: int = status.HTTP_404_NOT_FOUND
+    message: str = "Provided youtube video doesn't exist"
+    error: str = "video_not_found_error"
+    data: T | None = None
 
+class UnexpectedErrorOccurredInTranscriptError(ErrorResponse[T]):
+    status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
+    message: str = "An unexpected error occurred during video load."
+    error: str = "unexpected_error_occurred_in_transcript_error"
+    data: T | None = None
 
-class EnglishTranscripNotFoundError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=make_error_detail("english_transcript_not_found_error", "The given video does not support English."),
-            headers=headers
-        )
+class TranscriptDoesNotExistError(ErrorResponse[T]):
+    status_code: int = status.HTTP_404_NOT_FOUND
+    message: str = "Load the video first."
+    error: str = "transcript_does_not_exist_error"
+    data: T | None = None
 
-class TranscriptNotAllowedError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=make_error_detail("transcript_not_allowed_error", "Video is not supported for chatting."),
-            headers=headers
-        )
-
-
-class VideoNotFoundError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=make_error_detail("video_not_found_error", "Provided youtube video doesn't exist"),
-            headers=headers
-        )
-
-
-class UnexpectedErrorOccurredInTranscriptError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=make_error_detail("unexpected_error_occurred_in_transcript_error", "An unexpected error occurred during video load."),
-            headers=headers
-        )
-
-
-
-class TranscriptDoesNotExistError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=make_error_detail("transcript_does_not_exist_error", "Load the video first."),
-            headers=headers
-        )
-
-
-class TranscriptAlreadyExistError(HTTPException):
-    def __init__(self, headers=None):
-        super().__init__(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=make_error_detail("transcript_already_exists_error", "Video already loaded."),
-            headers=headers
-        )
+class TranscriptAlreadyExistError(ErrorResponse[T]):
+    status_code: int = status.HTTP_409_CONFLICT
+    message: str = "Video already loaded."
+    error: str = "transcript_already_exists_error"
+    data: T | None = None

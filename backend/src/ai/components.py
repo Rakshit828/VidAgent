@@ -1,6 +1,5 @@
 from typing import TypeAlias, Self
 
-
 from src.ai.youtube.transcript_preprocessor import TranscriptPreprocessor, TranscriptChunk
 from src.ai.youtube.video_loader import load_video_transcript, YoutubeApiResponse
 from src.ai.pinecone_vector_db.youtube_chunks import PineconeClient, init_pinecone_db

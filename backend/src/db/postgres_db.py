@@ -8,7 +8,6 @@ Base = declarative_base()
 # Async engine
 async_engine = create_async_engine(
     url=CONFIG.DATABASE_URL,
-    echo=True,
 )
 
 # Async Session

@@ -1,9 +1,9 @@
 from typing import List
 import httpx
 from fastapi import HTTPException
+from loguru import logger
 from ..exceptions import UnexpectedErrorOccurredInTranscriptError
 from src.config import CONFIG
-from src.logging_config import logger
 from pydantic import BaseModel
 
 HEADERS = {

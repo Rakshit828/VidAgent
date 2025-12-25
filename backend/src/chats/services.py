@@ -11,10 +11,10 @@ from src.chats.models import Chats
 
 
 class ChatServices:
-    async def get_all_chats_by_uuid(self, user_uid: str, session: AsyncSession):
+    async def get_all_chats_by_uuid(self, user_uid: str, session: AsyncSession) -> list[Chats]:
         statement = select(Chats).where(Chats.user_uid == user_uid)
         result = await session.execute(statement)
-        list_of_chats = result.all()
+        list_of_chats = result.scalars().all()
         if list_of_chats:
             return list_of_chats
         return []
@@ -70,7 +70,7 @@ class ChatServices:
             QuestionsAnswers.chat_uid == chat_uid
         )
         result = await session.execute(statement)
-        return result.all()
+        return result.scalars().all()
         
 
     async def get_video_url_by_chatid(self, chat_uid: str, session: AsyncSession):

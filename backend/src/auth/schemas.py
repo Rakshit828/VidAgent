@@ -1,7 +1,30 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 from uuid import UUID
 from datetime import datetime
-from typing import List
+from typing import Literal, List
+
+
+class TokenCookieDevConfig(BaseModel):
+    path: str = "/"
+    httponly: bool = True,
+    secure: bool = False
+    samesite: Literal['lax', 'strict', 'none'] = 'lax'
+  
+        
+class TokenCookieProductionConfig(BaseModel):
+    path: str = "/"
+    httponly: bool = True,
+    secure: bool = True,
+    samesite: Literal['lax', 'strict', 'none'] = 'none'
+
+
+class TokensSchema(BaseModel):
+    access_token: str
+    refresh_token: str
+
+class AccessTokenSchema(BaseModel):
+    access_token: str
+
 
 
 class UserCreateSchema(BaseModel):
@@ -26,21 +49,13 @@ class UserResponseSchema(BaseModel):
     role: str
     created_at: datetime
 
-    class Config:
-        orm_model = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RegisterAccountResponseSchema(BaseModel):
     data: UserResponseSchema
     message: str
 
-class TokensSchema(BaseModel):
-    access_token: str
-    refresh_token: str
-
-
-class AccessTokenSchema(BaseModel):
-    access_token: str
 
 
 class EmailModel(BaseModel):
