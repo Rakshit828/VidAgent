@@ -17,6 +17,7 @@ from .exceptions import (
     EmailAlreadyExistsError,
     EmailNotVerifiedError,
 )
+from src.app_responses import AppError
 
 
 class EmailService:
@@ -74,7 +75,7 @@ class AuthService:
     async def delete_user(self, email: str, session: AsyncSession):
         user = await self.get_user_by_email(email, session)
         if not user:
-            raise InvalidEmailError()
+            raise AppError(InvalidEmailError[None]())
 
         await session.delete(user)
         await session.commit()
@@ -88,7 +89,7 @@ class AuthService:
         user = await self.get_user_by_email(email, session)
 
         if not user:
-            raise InvalidEmailError()
+            raise AppError(InvalidEmailError[None]())
 
         # if not user.is_verified:
         #     raise EmailNotVerifiedError()
@@ -98,7 +99,7 @@ class AuthService:
         is_verified = verify_user(password, hashed_password)
 
         if not is_verified:
-            raise InvalidPasswordError()
+            raise AppError(InvalidPasswordError[None]())
 
         uuid = user.uuid
         role = user.role
@@ -114,7 +115,7 @@ class AuthService:
         user_exists = await self.get_user_by_email(email, session)
 
         if user_exists:
-            raise EmailAlreadyExistsError()
+            raise AppError(EmailAlreadyExistsError[None]())
 
         password = user_data_dict.get("password")
         hashed_password = generate_password_hash(password)

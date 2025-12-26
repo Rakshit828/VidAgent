@@ -35,14 +35,14 @@ class ChatServices:
         await session.commit()
         return True
 
-    async def update_chat(self, chat_uid: str, chat_data: Dict, session: AsyncSession):
+    async def update_chat(self, chat_uid: str, chat_data: Dict, session: AsyncSession) -> Chats:
         chat = await self.get_chat_by_id(chat_uid=chat_uid, session=session)
         if chat:
             for key, value in chat_data.items():
                 setattr(chat, key, value)
 
             await session.commit()
-            return chat.model_dump()
+            return chat
         raise AppError(ChatNotFoundError[None]())
 
     async def create_chat(self, user_uid: str, chat_data: Dict, session: AsyncSession) -> Chats:
@@ -66,20 +66,21 @@ class ChatServices:
         raise AppError(ChatNotFoundError[None]())
 
 
-    async def get_all_qa(self, chat_uid: str, session: AsyncSession):
+    async def get_all_qa(self, chat_uid: str, session: AsyncSession) -> list[QuestionsAnswers]:
         statement = select(QuestionsAnswers).where(
             QuestionsAnswers.chat_uid == chat_uid
         )
         result = await session.execute(statement)
-        return result.scalars().all()
+        questions_answers = result.scalars().all()
+        return questions_answers
         
 
-    async def get_video_url_by_chatid(self, chat_uid: str, session: AsyncSession):
+    async def get_video_url_by_chatid(self, chat_uid: str, session: AsyncSession) -> str | None :
         chat = await self.get_chat_by_id(chat_uid, session)
         if chat is not None:
             statement = select(Chats.youtube_video_url).where(Chats.uuid == chat_uid)
             result = await session.execute(statement)
-            return result.first()
+            return result.scalar_one_or_none()
         raise AppError(ChatNotFoundError[None]())
 
 

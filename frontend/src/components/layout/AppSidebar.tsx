@@ -1,9 +1,12 @@
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useLogout } from '../../hooks/api/useAuth';
 import {
     Plus,
     Video,
     PanelLeftClose,
     PanelLeftOpen,
+    LogOut,
 } from 'lucide-react';
 import { Button } from '../ui/button-shadcn';
 import { ScrollArea } from '../ui/scroll-area';
@@ -13,18 +16,18 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '../ui/tooltip';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 import { ModeToggle } from '../mode-toggle';
 import { ChatListItem } from '../chat/ChatListItem';
 import { cn } from '../../lib/utils';
-import type { MockChat } from '../../mock/data';
+import type { Chat } from '../../types';
 
 interface AppSidebarProps {
-    chats: MockChat[];
+    chats: Chat[];
     currentChatId?: string;
-    onSelectChat: (id: string) => void;
-    onDeleteChat: (id: string) => void;
-    onRenameChat: (id: string, newTitle: string) => void;
+    onSelectChat: (uuid: string) => void;
+    onDeleteChat: (uuid: string) => void;
+    onRenameChat: (uuid: string, newTitle: string) => void;
     className?: string;
     isCollapsed: boolean;
     onToggleCollapse: () => void;
@@ -41,6 +44,19 @@ export function AppSidebar({
     onToggleCollapse
 }: AppSidebarProps) {
     const navigate = useNavigate();
+    // Getting user information from the Zustand Auth Store
+    const user = useAuthStore((state) => state.user);
+    // TanStack Query Mutation for logging out
+    const logoutMutation = useLogout();
+
+    const handleLogout = async () => {
+        try {
+            await logoutMutation.mutateAsync();
+        } finally {
+            // Always navigate to login and clear state locally
+            navigate('/login');
+        }
+    };
 
     return (
         <div
@@ -118,9 +134,9 @@ export function AppSidebar({
                     <div className="flex flex-col gap-1 px-2 pb-4 w-full max-w-full overflow-hidden">
                         {chats.map((chat) => (
                             <ChatListItem
-                                key={chat.id}
+                                key={chat.uuid}
                                 chat={chat}
-                                isActive={currentChatId === chat.id}
+                                isActive={currentChatId === chat.uuid}
                                 isCollapsed={isCollapsed}
                                 onSelect={onSelectChat}
                                 onRename={onRenameChat}
@@ -141,28 +157,42 @@ export function AppSidebar({
                 {isCollapsed ? (
                     <div className="flex flex-col items-center gap-3">
                         <ModeToggle />
-                        <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
-                            <AvatarImage src="https://github.com/shadcn.png" />
-                            <AvatarFallback>U</AvatarFallback>
-                        </Avatar>
+                        <button
+                            onClick={handleLogout}
+                            className="text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                            <LogOut className="w-5 h-5" />
+                        </button>
                     </div>
                 ) : (
                     <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 overflow-hidden rounded-md p-1 hover:bg-accent/50 cursor-pointer flex-1 min-w-0">
                             <Avatar className="h-7 w-7 border shrink-0">
-                                <AvatarImage src="https://github.com/shadcn.png" />
-                                <AvatarFallback>U</AvatarFallback>
+                                <AvatarFallback>{user?.first_name?.[0].toUpperCase() || 'U'}</AvatarFallback>
                             </Avatar>
                             <div className="flex flex-col min-w-0">
-                                <span className="text-sm font-medium truncate leading-none">Demo User</span>
-                                <span className="text-[10px] text-muted-foreground truncate leading-none mt-1">user@example.com</span>
+                                <span className="text-sm font-medium truncate leading-none">
+                                    {user ? `${user.first_name} ${user.last_name}` : 'Demo User'}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground truncate leading-none mt-1">
+                                    {user?.email || 'user@example.com'}
+                                </span>
                             </div>
                         </div>
-                        <ModeToggle />
+                        <div className="flex items-center gap-1">
+                            <ModeToggle />
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                onClick={handleLogout}
+                            >
+                                <LogOut className="w-4 h-4" />
+                            </Button>
+                        </div>
                     </div>
                 )}
             </div>
         </div>
     );
 }
-

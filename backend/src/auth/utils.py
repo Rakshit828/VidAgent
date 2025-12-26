@@ -10,6 +10,7 @@ from .exceptions import (
     InvalidJWTTokenError,
 )
 from itsdangerous import URLSafeTimedSerializer
+from src.app_responses import AppError
 
 REFRESH_TOKEN_EXPIRY = timedelta(days=CONFIG.REFRESH_TOKEN_EXPIRY_DAYS)
 ACCESS_TOKEN_EXPIRY = timedelta(minutes=CONFIG.ACCESS_TOKEN_EXPIRY_MINUTES)
@@ -99,12 +100,12 @@ def decode_jwt_tokens(jwt_token: str, is_refresh: bool = False):
 
     except ExpiredSignatureError:
         raise (
-            ExpiredAccessTokenError()
+            AppError(ExpiredAccessTokenError[None]())
             if is_refresh is False
-            else ExpiredRefreshTokenError()
+            else AppError(ExpiredRefreshTokenError[None]())
         )
     except InvalidTokenError:
-        raise InvalidJWTTokenError()
+        raise AppError(InvalidJWTTokenError[None]())
 
 
 async def create_url_safe_token(email):

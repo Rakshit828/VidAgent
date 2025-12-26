@@ -6,15 +6,15 @@ from typing import Literal, List
 
 class TokenCookieDevConfig(BaseModel):
     path: str = "/"
-    httponly: bool = True,
+    httponly: bool = True
     secure: bool = False
     samesite: Literal['lax', 'strict', 'none'] = 'lax'
   
         
 class TokenCookieProductionConfig(BaseModel):
     path: str = "/"
-    httponly: bool = True,
-    secure: bool = True,
+    httponly: bool = True
+    secure: bool = True
     samesite: Literal['lax', 'strict', 'none'] = 'none'
 
 
@@ -28,9 +28,8 @@ class AccessTokenSchema(BaseModel):
 
 
 class UserCreateSchema(BaseModel):
-    first_name: str = Field(alias='firstName')
-    last_name: str = Field(alias='lastName')
-    username: str =  Field(alias='firstName')
+    first_name: str
+    last_name: str
     email: EmailStr 
     password: str 
 

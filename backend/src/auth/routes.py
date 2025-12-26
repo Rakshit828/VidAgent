@@ -78,8 +78,8 @@ async def login(
         response=response, tokens=tokens, is_login=True
     )
     data = {
-        tokens: tokens,
-        user: user
+        "tokens": tokens,
+        "user": user
     }
     return SuccessResponse[LoginResponseSchema](
         message="Logged In Successfully.", status_code=status.HTTP_200_OK, data=data
@@ -129,8 +129,8 @@ async def refresh_access_token(
     access_token = await create_jwt_tokens(
         user_uuid=user_uuid, role=role, is_login=False
     )
-    access_token = AccessTokenSchema(access_token=access_token)
-    tokens_injector.set_tokens_as_cookies(
+    access_token = AccessTokenSchema(**access_token)
+    await tokens_injector.set_tokens_as_cookies(
         response=response, tokens=access_token, is_login=False
     )
 

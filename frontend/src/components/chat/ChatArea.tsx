@@ -5,7 +5,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Send, Bot, User, Youtube, Copy, Check, Video } from 'lucide-react';
 import type { MockMessage } from '../../mock/data';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { cn } from '../../lib/utils';
+import { cn, extractYouTubeId } from '../../lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 interface ChatAreaProps {
@@ -49,19 +49,40 @@ export function ChatArea({
         <div className="flex flex-col h-full overflow-hidden bg-background">
             <ScrollArea className="flex-1 p-4">
                 <div className="max-w-3xl mx-auto space-y-6 pb-4 h-full flex flex-col">
-                    {/* Embedded Video Placeholder */}
+                    {/* YouTube Video Player */}
                     {videoUrl && (
-                        <div className="rounded-xl overflow-hidden border border-border shadow-sm mb-6 bg-black/5 shrink-0">
-                            {/* Mock Video Player */}
-                            <div className="aspect-video w-full flex items-center justify-center bg-muted relative group">
-                                <Youtube className="w-16 h-16 text-muted-foreground/50" />
-                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-                                    <span className="text-white font-medium">Video Player Placeholder</span>
-                                </div>
+                        <div className="rounded-xl overflow-hidden border border-border shadow-xl mb-6 bg-black/5 shrink-0 animate-in fade-in slide-in-from-top-4 duration-500">
+                            <div className="aspect-video w-full bg-muted relative">
+                                {(() => {
+                                    const videoId = extractYouTubeId(videoUrl);
+                                    if (videoId) {
+                                        return (
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                src={`https://www.youtube.com/embed/${videoId}`}
+                                                title="YouTube video player"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allowFullScreen
+                                                className="absolute inset-0 w-full h-full"
+                                            ></iframe>
+                                        );
+                                    }
+                                    return (
+                                        <div className="flex flex-col items-center justify-center h-full gap-2">
+                                            <Youtube className="w-12 h-12 text-muted-foreground/50" />
+                                            <span className="text-sm text-muted-foreground font-medium">Invalid Video URL</span>
+                                        </div>
+                                    );
+                                })()}
                             </div>
                             <div className="p-3 bg-card border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                                <span>{videoUrl}</span>
-                                <span className="text-green-500 flex items-center gap-1">
+                                <div className="flex items-center gap-2 truncate">
+                                    <Video className="w-3 h-3 text-primary" />
+                                    <span className="truncate max-w-[200px] md:max-w-md">{videoUrl}</span>
+                                </div>
+                                <span className="text-green-500 flex items-center gap-1 font-semibold whitespace-nowrap">
                                     Processed <Check className="w-3 h-3" />
                                 </span>
                             </div>

@@ -9,15 +9,15 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import type { MockChat } from '../../mock/data';
+import type { Chat } from '../../types';
 
 interface ChatListItemProps {
-    chat: MockChat;
+    chat: Chat;
     isActive: boolean;
     isCollapsed: boolean;
-    onSelect: (id: string) => void;
-    onRename: (id: string, newTitle: string) => void;
-    onDelete: (id: string) => void;
+    onSelect: (uuid: string) => void;
+    onRename: (uuid: string, newTitle: string) => void;
+    onDelete: (uuid: string) => void;
 }
 
 export function ChatListItem({
@@ -41,7 +41,7 @@ export function ChatListItem({
 
     const handleSave = () => {
         if (editValue.trim() && editValue.trim() !== chat.title) {
-            onRename(chat.id, editValue.trim());
+            onRename(chat.uuid, editValue.trim());
         }
         setIsEditing(false);
     };
@@ -61,7 +61,7 @@ export function ChatListItem({
     if (isCollapsed) {
         return (
             <div
-                onClick={() => onSelect(chat.id)}
+                onClick={() => onSelect(chat.uuid)}
                 className={cn(
                     "flex h-10 w-10 items-center justify-center rounded-md transition-colors hover:bg-muted cursor-pointer mx-auto",
                     isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground"
@@ -75,7 +75,7 @@ export function ChatListItem({
 
     return (
         <div
-            onClick={() => !isEditing && onSelect(chat.id)}
+            onClick={() => !isEditing && onSelect(chat.uuid)}
             className={cn(
                 "group relative flex w-full max-w-full overflow-hidden items-center rounded-md px-2 py-2 text-sm cursor-pointer transition-colors hover:bg-accent/50",
                 isActive ? "bg-accent text-accent-foreground font-medium" : "text-muted-foreground"
@@ -131,7 +131,7 @@ export function ChatListItem({
                                 className="text-destructive focus:text-destructive"
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    onDelete(chat.id);
+                                    onDelete(chat.uuid);
                                 }}
                             >
                                 <Trash2 className="mr-2 h-4 w-4" />
