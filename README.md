@@ -1,232 +1,156 @@
-# ChatTube-AI : Chat with YouTube Videos
+# 📺 ChatTube AI: Your Intelligent YouTube Conversational Agent
 
-A full‑stack RAG (Retrieval-Augmented Generation) web application that lets users **chat with their YouTube videos**. The interface is modeled after modern LLM chat UIs (like ChatGPT), with a sidebar for multiple chats and a main chat area for interaction.
-
----
-
-## Live Demo
-
-Watch the application in action:
-[ChatTube-AI](https://chattube-ai.netlify.app/)
+ChatTube AI is a production-grade, agentic RAG (Retrieval-Augmented Generation) application designed to transform how you consume YouTube content. Instead of just watching, you can now **converse** with any video. Powered by an advanced AI agent, ChatTube analyzes transcripts, retrieves relevant context, and provides real-time, cited answers to your deepest questions.
 
 ---
 
-## Screenshots
-
-<img width="1920" height="1080" alt="Screenshot (171)" src="https://github.com/user-attachments/assets/9f7f1d8a-e21d-4c34-a79c-5e40b44e596d" />
-<img width="1920" height="1080" alt="Screenshot (170)" src="https://github.com/user-attachments/assets/b670f8dc-601a-4c0d-b3fa-391dd672547c" />
-<img width="1920" height="1080" alt="Screenshot (169)" src="https://github.com/user-attachments/assets/e40b87bf-5f12-4c0e-9c0d-bec9aac5466a" />
+## 🚀 Live Demo
+**Coming Soon**
 
 ---
 
-## Features
+## 🌟 Core Features
 
-* **React frontend** with a ChatGPT‑style interface
-  * Sidebar for switching between multiple chats
-  * Main chat area for Q&A
-  * Real-time message streaming
-* **FastAPI backend** for APIs and business logic
-* **Authentication** with JWT tokens
-* **Database**: PostgreSQL for structured data
-* **Vector database**: **Pinecone** for embeddings and retrieval
-* **LangChain integration** for LLM orchestration
-* **Chat organization**
-  * One user → multiple chats
-  * One chat → multiple Q&As
-  * One chat is bound to **one YouTube video ID**
+- **🧠 Agentic Reasoning**: Built with **LangGraph**, the application uses a sophisticated state machine to decide whether to fetch video context, check conversation history, or answer directly.
+- **⚡ Real-time SSE Streaming**: Experience instantaneous responses with Server-Sent Events (SSE). Watch the AI "think" through agent steps and stream answers token-by-token.
+- **📥 Intelligent Ingestion**: Automatically extracts YouTube transcripts, segments them into meaningful chunks, and indexes them into a high-performance vector database.
+- **🤖 Multi-LLM Support**: Choice and flexibility. Switch between various cutting-edge models like GPT-OSS-120B, Llama 3.3, and Qwen to find the best reasoning for your queries.
+- **💾 Persistent Conversations**: Seamlessly save your chat history. Conversations are persisted to a PostgreSQL backend with manual cache synchronization for a lag-free UI.
+- **🎨 Premium UX/UI**: A modern, sleek interface built with Tailwind CSS 4 and Shadcn/UI. Features include:
+  - Responsive Sidebar for chat management.
+  - Interactive status indicators for Agent steps.
+  - Full Markdown support for code snippets, lists, and tables in AI responses.
+  - Smooth animations with Framer Motion.
+  - Dark/Light mode support.
 
 ---
 
-## Tech Stack
+## 🏗️ High-Level Architecture
 
-* **Frontend**: React, Tailwind CSS
-* **Backend**: FastAPI (Python)
-* **AI/LLM**: LangChain
-* **Vector DB**: Pinecone
-* **Relational DB**: PostgreSQL
-* **Auth**: JWT
+1.  **Ingestion Pipeline**: YouTube URL → Transcript Extraction → Recursive Character Splitting → HuggingFace Embeddings → Pinecone Vector Store.
+2.  **Agentic Workflow**: User Query → LangGraph Decision Maker → Vector Similarity Search (Metadata Filtered by Video ID) → Context Consolidation → LLM Response.
+3.  **Communication**: Frontend communicates with FastAPI via REST for configuration and SSE for high-concurrency streaming.
 
 ---
 
-## Project Structure
+## 🛠️ Tech Stack
+
+### **Frontend**
+- **Framework**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand) & [TanStack Query v5](https://tanstack.com/query/latest)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/) + [Shadcn/UI](https://ui.shadcn.com/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Markdown**: [React Markdown](https://github.com/remarkjs/react-markdown) + [Remark GFM](https://github.com/remarkjs/remark-gfm)
+- **Icons**: [Lucide React](https://lucide.dev/)
+
+### **Backend**
+- **Framework**: [FastAPI](https://fastapi.tiangolo.com/)
+- **Orchestration**: [LangChain](https://www.langchain.com/) & [LangGraph](https://www.langchain.com/langgraph)
+- **Database**: [PostgreSQL](https://www.postgresql.org/) with [SQLAlchemy](https://www.sqlalchemy.org/) (Async)
+- **Vector DB**: [Pinecone](https://www.pinecone.io/)
+- **Authentication**: JWT (JSON Web Tokens) with Argon2 hashing
+- **Logging**: [Loguru](https://github.com/Delgan/loguru)
+
+---
+
+## 📂 Project Structure
 
 ```bash
 .
-├── backend/                     # FastAPI app
+├── backend/                     # FastAPI Application
 │   └── src/
-│       ├── ai/                  # AI features (LangChain, Pinecone)
-│       ├── auth/                # Authentication and user management
-│       ├── chats/               # User chats and QAs management
-│       ├── utils/               # Universal helpers
-│       └── db/                  # PostgreSQL setup (database code)
-│   ├── .env
-│   ├── config.py
-│   ├── requirements.txt
+│       ├── ai/                  # AI Agent, LangGraph logic, & Vector DB integrations
+│       ├── auth/                # JWT Auth, User flows, & Security
+│       ├── chats/               # Chat management & QA persistence logic
+│       ├── db/                  # SQLAlchemy models & migrations
+│       └── main.py              # Application entry point
 │
-├── frontend/                    # React app
+├── frontend/                    # React Vite Application
 │   └── src/
-│       ├── api/                 # API helpers (auth, chats, base)
-│       ├── app/                 # Redux store and related logic
-│       ├── assets/              # Static assets (images, logos)
-│       ├── components/
-│       │   ├── auth/            # Auth form components
-│       │   └── home/            # Chat UI, sidebar, chat area, loaders
-│       ├── features/            # Redux slices (auth, chats)
-│       ├── helpers/             # Utility/helper functions
-│       ├── hooks/               # Custom React hooks
-│       ├── pages/               # Page components (Home, Login, Signup)
-│       ├── App.jsx
-│       ├── App.css
-│       ├── index.css
-│       └── main.jsx
-│   ├── package.json
-│   └── vite.config.js
+│       ├── components/          # Specialized UI components (ChatArea, Sidebar, etc.)
+│       ├── hooks/               # Custom hooks (SSE streaming, API wrappers)
+│       ├── constants/           # LLM configurations & Agent step messages
+│       ├── store/               # Zustand state management
+│       ├── types/               # TypeScript definitions
+│       └── pages/               # Main application views
 │
 └── README.md
 ```
 
 ---
 
-## Getting Started
+## 🚀 Getting Started
 
-### Prerequisites
+### **Prerequisites**
+- **Node.js** >= 20
+- **Python** >= 3.11
+- **PostgreSQL** (Local or Cloud)
+- **Pinecone Account** (Vector Index)
+- **Groq API Key** (LLM Provider)
 
-* **Node.js** >= 18
-* **Python** >= 3.10
-* **PostgreSQL** running locally or via Docker
-* **OpenAI API Key** (or other LLM provider)
-* **Groq API Key** for LLM services
-* **Huggingface API Key** (for running local embedding models)
-* **Pinecone API Key** (for vector database)
-
-### Environment Variables
-
+### **1. Environment Setup**
 Create a `.env` file in the `backend/` directory:
 
 ```env
-DATABASE_URL=
-GROQ_API_KEY=
-HUGGINGFACE_API_KEY=
-PINECONE_API_KEY=
-PINECONE_ENVIRONMENT=
-JWT_SECRET_KEY=your_jwt_secret_key
-JWT_ALGORITHM=HS256
-
-## Optional Configs
-MAIL_USERNAME=
-MAIL_PASSWORD=
-MAIL_SERVER=
-MAIL_PORT=
-MAIL_FROM=
-MAIL_FROM_NAME=
-MAIL_STARTTLS=
-MAIL_SSL_TLS=
-USE_CREDENTIALS=
-VALIDATE_CERTS=
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost/chattube
+GROQ_API_KEY=your_groq_key
+PINECONE_API_KEY=your_pinecone_key
+PINECONE_INDEX=chattube
+JWT_SECRET_KEY=your_super_secret_key
+# Optional: Mail settings for verification
+MAIL_USERNAME=...
 ```
 
-### Backend Setup
-
+### **2. Backend Installation**
 ```bash
 cd backend
-
-# Create and activate virtual environment
 python -m venv venv
-venv\Scripts\activate  # On Windows
-
-# Install dependencies
+source venv/bin/activate  # venv\Scripts\activate on Windows
 pip install -r requirements.txt
-
-# Start the server
 fastapi dev src
 ```
 
-The backend will be available at `http://localhost:8000`
-
-### Frontend Setup
-
+### **3. Frontend Installation**
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:5173`
+---
+
+## 📖 Key Implementation Details
+
+### **Agentic SSE Streaming**
+The application uses a custom `useAgentStream` hook that handles the complexity of SSE:
+- Automatic 401 token refresh and retry logic.
+- Real-time updates of agent status (e.g., "Scanning transcript...", "Thinking...").
+- AbortController integration for cancelling streams mid-way.
+
+### **Persistance & Caching**
+To provide a snappy experience:
+1.  Query and Response are saved to PostgreSQL *after* the stream completes.
+2.  The TanStack Query cache is manually updated on the frontend to reflect changes instantly without a full page refetch.
 
 ---
 
-## Usage
+## 🤝 Contributing
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-1. **Register or log in** to your account
-2. **Start a new chat** by providing a YouTube video URL
-3. **Ask questions** about the video content
-4. **Receive AI‑powered answers** based on video transcripts
-5. **Manage multiple chats** via the sidebar
-6. **View chat history** for each conversation
-
----
-
-## API Documentation
-
-Once the backend is running, visit:
-* **Interactive API docs (Swagger)**: `http://localhost:8000/docs`
-* **ReDoc**: `http://localhost:8000/redoc`
-
----
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
 ---
 
-## License
-
-MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## Acknowledgments
-
-* Built with [LangChain](https://www.langchain.com/)
-* Powered by [Groq](https://groq.com/)
-* UI inspired by ChatGPT
+## 📜 License
+Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
-## Future Improvements
-
-### Planned Features
-* **Enhanced Multi-language support** for international users
-* **Export chat history** to PDF or markdown
-* **Collaborative chats** - Share chats with other users
-* **Voice input/output** for questions and answers
-
-### Technical Improvements
-* **Caching layer** with Redis for faster responses
-* **Rate limiting** to prevent API abuse
-* **WebSocket support** for real-time streaming responses
-* **Improved error handling** and user feedback
-
-### AI Enhancements
-* **Support for multiple LLM providers** (Claude, Gemini, local models)
-* **Multi-modal support** - Analyze video frames and audio
-* **Context-aware responses** using chat history for making the chatbot conversational
-* **Implementation of Long-Term/Short-Term memory** for the prefrences
-* **Source citations** with exact timestamp references
-* **Transforming into Agentic Application** having multiple tool calling features
----
-
-## Contact
-
-For questions or support, please open an issue on GitHub.
+## ❤️ Acknowledgments
+- UI inspiration from ChatGPT and Claude.
+- Groq for providing lightning-fast LLM inference.
+- The open-source communities behind LangChain and Radix UI.
