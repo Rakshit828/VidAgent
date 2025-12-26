@@ -35,13 +35,13 @@ class EmailService:
 
 class AuthService:
 
-    async def get_user_by_uuid(self, user_uid: str, session: AsyncSession):
+    async def get_user_by_uuid(self, user_uid: str, session: AsyncSession) -> Users | None:
         """Returns the user with the respective email"""
 
         statement = select(Users).where(Users.uuid == user_uid)
         result = await session.execute(statement)
-        result = result.first()
-        return result
+        user = result.scalar_one_or_none()
+        return user
 
     async def get_user_by_email(self, email: str, session: AsyncSession) -> Users | None:
         """Returns the user with the respective email"""

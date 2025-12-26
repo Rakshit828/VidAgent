@@ -11,9 +11,15 @@ from .schemas import (
     AccessTokenSchema,
     EmailModel,
     TokensSchema,
+    LoginResponseSchema
 )
 from .services import AuthService, EmailService
-from .dependencies import RefreshTokenBearer, admin_checker, TokensInjector
+from .dependencies import (
+    RefreshTokenBearer,
+    admin_checker,
+    TokensInjector,
+    AccessTokenBearer,
+)
 from .utils import create_jwt_tokens, decode_url_safe_token
 from src.mail_service import mail, create_message
 from src.app_responses import SuccessResponse
@@ -50,41 +56,66 @@ async def create_account(
     return SuccessResponse[UserResponseSchema](
         message="Account Created Successfully.",
         status_code=status.HTTP_201_CREATED,
-        data=user
+        data=user,
     )
 
 
-@auth_routes.post("/login", response_model=SuccessResponse[TokensSchema], status_code=status.HTTP_200_OK)
+@auth_routes.post(
+    "/login",
+    response_model=SuccessResponse[LoginResponseSchema],
+    status_code=status.HTTP_200_OK,
+)
 async def login(
     response: Response,
     user_data: UserLogInSchema,
     session: AsyncSession = Depends(get_session),
-) -> SuccessResponse[TokensSchema]:
+) -> SuccessResponse[LoginResponseSchema]:
 
     tokens = await auth_service.log_in_user(user_data, session)
+    user = await auth_service.get_user_by_email(user_data.email, session)
     tokens = TokensSchema(**tokens)
     await tokens_injector.set_tokens_as_cookies(
         response=response, tokens=tokens, is_login=True
     )
-    return SuccessResponse[TokensSchema](
-        message="Logged In Successfully.",
-        status_code=status.HTTP_200_OK,
-        data=tokens
+    data = {
+        tokens: tokens,
+        user: user
+    }
+    return SuccessResponse[LoginResponseSchema](
+        message="Logged In Successfully.", status_code=status.HTTP_200_OK, data=data
     )
 
 
-@auth_routes.get("/logout")
-async def logout_user():
+@auth_routes.get("/logout", response_model=SuccessResponse[None], status_code=200)
+async def logout_user(response: Response):
     # Logic to revoke the jwt token in future when Redis is implemented
 
-    response = JSONResponse({"msg": "Logged out successfully"})
     response.delete_cookie(
         key="refresh_token",
         httponly=True,
         secure=True,
         samesite="none",
     )
-    return response
+    return SuccessResponse[None](
+        message="Logged Out Successfully.", status_code=status.HTTP_200_OK
+    )
+
+
+
+
+@auth_routes.get(
+    "/user/me",
+    response_model=SuccessResponse[UserResponseSchema],
+    status_code=status.HTTP_200_OK,
+)
+async def get_user(
+    decoded_token_data: dict = Depends(RefreshTokenBearer()),
+    session: AsyncSession = Depends(get_session),
+) -> SuccessResponse[UserResponseSchema]:
+    user = await auth_service.get_user_by_uuid(decoded_token_data["sub"], session)
+    return SuccessResponse[UserResponseSchema](
+        message="User fetched successfully.", status_code=status.HTTP_200_OK, data=user
+    )
 
 
 @auth_routes.get("/refresh", response_model=SuccessResponse[AccessTokenSchema])
@@ -108,8 +139,6 @@ async def refresh_access_token(
         status_code=status.HTTP_200_OK,
         data=access_token.model_dump(),
     )
-
-
 
 
 @auth_routes.get("/get-verification-email/{email}")

@@ -39,7 +39,6 @@ class UpdateChatSchema(BaseModel):
 class CreateQASchema(BaseModel):
     query: str
     answer: str
-    chat_uid: UUID 
 
 class ResponseChatSchema(BaseModel):
     uuid: UUID

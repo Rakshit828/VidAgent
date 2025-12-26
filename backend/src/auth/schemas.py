@@ -51,6 +51,11 @@ class UserResponseSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class LoginResponseSchema(BaseModel):
+    tokens: TokensSchema
+    user: UserResponseSchema
+
+
 
 class RegisterAccountResponseSchema(BaseModel):
     data: UserResponseSchema

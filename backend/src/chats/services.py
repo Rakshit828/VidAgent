@@ -4,10 +4,11 @@ from fastapi import HTTPException, status
 
 from typing import Dict
 
-
+from .exceptions import ChatNotFoundError
 from .models import Chats, QuestionsAnswers
 from src.auth.models import Users
 from src.chats.models import Chats
+from src.app_responses import AppError
 
 
 class ChatServices:
@@ -20,13 +21,16 @@ class ChatServices:
         return []
 
 
-    async def get_chat_by_id(self, chat_uid: str, session: AsyncSession):
+    async def get_chat_by_id(self, chat_uid: str, session: AsyncSession) -> Chats | None:
         statement = select(Chats).where(Chats.uuid == chat_uid)
         result = await session.execute(statement)
-        return result.first()
+        return result.scalar_one_or_none()
 
     async def delete_chat(self, chat_uid: str, session: AsyncSession):
         chat = await self.get_chat_by_id(chat_uid, session)
+        if chat is None:
+            raise AppError(ChatNotFoundError[None]())
+
         await session.delete(chat)
         await session.commit()
         return True
@@ -39,9 +43,7 @@ class ChatServices:
 
             await session.commit()
             return chat.model_dump()
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail={"Chat not found"}
-        )
+        raise AppError(ChatNotFoundError[None]())
 
     async def create_chat(self, user_uid: str, chat_data: Dict, session: AsyncSession) -> Chats:
         chat_data["user_uid"] = user_uid
@@ -53,17 +55,16 @@ class ChatServices:
         await session.commit()
         return new_chat
 
-    async def create_qa(self, qa_data: Dict, session: AsyncSession):
-        chat_uid = qa_data["chat_uid"]
+    async def create_qa(self, chat_uid: str, qa_data: Dict, session: AsyncSession):
         chat = await self.get_chat_by_id(chat_uid, session)
         if chat:
             new_qa = QuestionsAnswers(**qa_data)
             session.add(new_qa)
             await session.commit()
             return new_qa
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail={"Chat does not exists"}
-        )
+        
+        raise AppError(ChatNotFoundError[None]())
+
 
     async def get_all_qa(self, chat_uid: str, session: AsyncSession):
         statement = select(QuestionsAnswers).where(
@@ -79,9 +80,9 @@ class ChatServices:
             statement = select(Chats.youtube_video_url).where(Chats.uuid == chat_uid)
             result = await session.execute(statement)
             return result.first()
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail={"Chat does not exists"}
-        )
+        raise AppError(ChatNotFoundError[None]())
+
+
 
 
 chat_service = ChatServices()

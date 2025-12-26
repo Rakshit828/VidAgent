@@ -106,17 +106,18 @@ async def delete_chat(
 
 
 @chats_router.post(
-    "/newqa",
+    "/newqa/{chat_uid}",
     response_model=SuccessResponse[ResponseQASchema],
     description="Helps to save the query and the answer to the database.",
 )
 async def create_new_qa(
+    chat_uid: str,
     qa_data: CreateQASchema,
     session: AsyncSession = Depends(get_session),
     decoded_token_data: Dict = Depends(AccessTokenBearer()),
 ) -> SuccessResponse[ResponseQASchema]:
     qa_data_dict = qa_data.model_dump()
-    new_qa = await chat_service.create_qa(qa_data=qa_data_dict, session=session)
+    new_qa = await chat_service.create_qa(chat_uid=chat_uid, qa_data=qa_data_dict, session=session)
     return SuccessResponse[ResponseQASchema](
         message="QA created successfully", status_code=201, data=new_qa
     )
