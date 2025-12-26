@@ -80,6 +80,8 @@ async def llm_initial_decision_maker(
     else:
         decision_dict.update({'next_node': 'retrieve_context'})
     
+    # logger.info(f"[LLM INITIAL DECISION MAKER] {decision_dict}")
+
     return decision_dict
 
 
@@ -107,10 +109,11 @@ async def fetch_relevant_context(
     user_query = state["user_query"]
     pinecone_client = context.components.vector_db
     relevant_context: List[Dict] = await pinecone_client.retrieve_context(
-        query=user_query, user_id=context.user_id, video_id=context.video_id,
+        query=user_query, user_id=context.user_id, video_id=context.video_id, k=4
     )
     formatted_context = [{ "start_time": context['fields']['start_time'], "end_time": context['fields']['end_time'], "text": context['fields']['text'] } for context in relevant_context]
     # The value of k can be modified based on the user specific instruction
+    # logger.info(f"[FETCH RELEVANT CONTEXT] {formatted_context}")
     return {"relevant_context": formatted_context, 'next_node': 'final_llm_response'}
 
 
@@ -128,6 +131,7 @@ async def final_llm_response(state: AgentState, runtime: Runtime[AgentContext]):
         user_query=user_query,
     )
     answer = await context.chat_model.call_llm(prompt)
+    # logger.info(f"[FINAL LLM RESPONSE] {answer}")
     return {"response": answer, 'next_node': '__end__'}
 
 

@@ -58,7 +58,7 @@ class ChatServices:
     async def create_qa(self, chat_uid: str, qa_data: Dict, session: AsyncSession):
         chat = await self.get_chat_by_id(chat_uid, session)
         if chat:
-            new_qa = QuestionsAnswers(**qa_data)
+            new_qa = QuestionsAnswers(**qa_data, chat_uid=chat_uid)
             session.add(new_qa)
             await session.commit()
             return new_qa

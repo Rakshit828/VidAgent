@@ -1,9 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
 import { AGENT_STEP_MESSAGES, DEFAULT_AGENT_MESSAGE } from '../constants/agentSteps';
+import type { SupportedModel, AgentQueryData } from '../types/chats.api';
 
 interface UseAgentStreamOptions {
     chatId: string;
-    onStreamComplete?: (finalMessage: string) => void;
+    onStreamComplete?: (query: string, answer: string) => void;
     onError?: (error: Error) => void;
 }
 
@@ -11,7 +12,7 @@ interface AgentStreamResult {
     isStreaming: boolean;
     agentStatus: string;
     statusMessage: string;
-    startStream: (query: string, videoId: string) => Promise<string | null>;
+    startStream: (query: string, videoId: string, model: SupportedModel) => Promise<string | null>;
     cancelStream: () => void;
 }
 
@@ -78,10 +79,17 @@ export const useAgentStream = ({
     const performStream = useCallback(async (
         query: string,
         videoId: string,
+        model: SupportedModel,
         retryCount: number = 0
     ): Promise<string | null> => {
         const MAX_RETRIES = 1;
         let accumulatedContent = '';
+
+        const requestData: AgentQueryData = {
+            query,
+            video_id: videoId,
+            model,
+        };
 
         try {
             const response = await fetch(`${API_BASE_URL}/chats/agent/${chatId}`, {
@@ -91,10 +99,7 @@ export const useAgentStream = ({
                 },
                 credentials: 'include', // Important for cookie-based auth
                 signal: abortControllerRef.current?.signal,
-                body: JSON.stringify({
-                    query,
-                    video_id: videoId,
-                }),
+                body: JSON.stringify(requestData),
             });
 
             // Handle 401 - Token expired
@@ -111,7 +116,7 @@ export const useAgentStream = ({
                     if (refreshResponse.ok) {
                         console.log('Token refreshed successfully, retrying stream...');
                         // Recursively retry the stream with incremented retry count
-                        return await performStream(query, videoId, retryCount + 1);
+                        return await performStream(query, videoId, model, retryCount + 1);
                     } else {
                         throw new Error('Token refresh failed');
                     }
@@ -199,11 +204,13 @@ export const useAgentStream = ({
      * 
      * @param query - User's question about the video
      * @param videoId - YouTube video ID
+     * @param model - Selection LLM model name
      * @returns The complete assistant response or null on error
      */
     const startStream = useCallback(async (
         query: string,
-        videoId: string
+        videoId: string,
+        model: SupportedModel
     ): Promise<string | null> => {
         // Cancel any existing stream
         cancelStream();
@@ -216,11 +223,11 @@ export const useAgentStream = ({
         setAgentStatus('initializing');
 
         try {
-            const finalContent = await performStream(query, videoId, 0);
+            const finalContent = await performStream(query, videoId, model, 0);
 
-            // Stream complete
+            // Stream complete - pass both query and answer to callback
             if (onStreamComplete && finalContent) {
-                onStreamComplete(finalContent);
+                onStreamComplete(query, finalContent);
             }
 
             return finalContent;

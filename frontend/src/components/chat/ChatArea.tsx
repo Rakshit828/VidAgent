@@ -9,6 +9,15 @@ import type { MockMessage } from '../../mock/data';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { cn, extractYouTubeId } from '../../lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger
+} from '../ui/dropdown-menu';
+import { SUPPORTED_LLMS } from '../../constants/llms';
+import type { SupportedModel } from '../../types/chats.api';
+import { ChevronDown, Cpu } from 'lucide-react';
 
 
 interface ChatAreaProps {
@@ -18,6 +27,8 @@ interface ChatAreaProps {
     agentStatus?: string; // Now expects the user-friendly message directly
     onSendMessage: (message: string) => void;
     videoUrl?: string; // For embedding
+    selectedModel: SupportedModel;
+    onModelChange: (model: SupportedModel) => void;
 }
 
 export function ChatArea({
@@ -26,7 +37,9 @@ export function ChatArea({
     isStreaming,
     agentStatus,
     onSendMessage,
-    videoUrl
+    videoUrl,
+    selectedModel,
+    onModelChange
 }: ChatAreaProps) {
     const [input, setInput] = React.useState('');
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -187,19 +200,19 @@ export function ChatArea({
                                 msg.role === 'user' ? "items-end" : "items-start"
                             )}>
                                 <div className={cn(
-                                    "rounded-2xl px-4 py-3 text-sm shadow-sm overflow-hidden",
+                                    "rounded-2xl px-5 py-3 text-base shadow-sm overflow-hidden transition-colors",
                                     msg.role === 'user'
                                         ? "bg-primary text-primary-foreground rounded-tr-sm"
-                                        : "bg-muted/50 border border-border rounded-tl-sm text-foreground"
+                                        : "bg-muted/80 border border-border rounded-tl-sm text-foreground shadow-sm"
                                 )}>
                                     {msg.role === 'assistant' ? (
-                                        <div className="prose prose-sm dark:prose-invert max-w-none wrap-break-word">
+                                        <div className="prose prose-base dark:prose-invert max-w-none wrap-break-word leading-relaxed prose-p:text-foreground prose-headings:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-code:text-foreground">
                                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                                 {msg.content}
                                             </ReactMarkdown>
                                         </div>
                                     ) : (
-                                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                                        <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
                                     )}
                                 </div>
 
@@ -267,26 +280,59 @@ export function ChatArea({
                 <div className="p-4 border-t border-border bg-background/50 backdrop-blur-sm">
                     <div className="max-w-3xl mx-auto relative">
                         <form onSubmit={handleSubmit} className="relative group">
-                            <div className="absolute -inset-0.5 bg-linear-to-r from-primary/20 to-purple-600/20 rounded-full blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
+                            <div className="absolute -inset-0.5 bg-linear-to-r from-primary/20 to-purple-600/20 rounded-full blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
                             <div className="relative">
                                 <Input
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     placeholder={isStreaming ? "Wait for AI response..." : "Ask something about the video..."}
-                                    className="pr-12 py-6 rounded-full shadow-sm border-muted-foreground/20 focus-visible:ring-primary/20 bg-muted/10 backdrop-blur-sm"
+                                    className="pr-28 md:pr-36 py-6 rounded-full shadow-sm border-muted-foreground/20 focus-visible:ring-primary/20 bg-muted/10 backdrop-blur-sm"
                                     disabled={isLoading || isStreaming}
                                 />
-                                <Button
-                                    size="icon"
-                                    type="submit"
-                                    className={cn(
-                                        "absolute right-1.5 top-1.5 h-9 w-9 rounded-full transition-all duration-300",
-                                        isStreaming ? "bg-muted cursor-not-allowed" : "bg-primary"
-                                    )}
-                                    disabled={!input.trim() || isLoading || isStreaming}
-                                >
-                                    {isStreaming ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : <Send className="w-4 h-4" />}
-                                </Button>
+                                <div className="absolute right-1.5 top-1.5 bottom-1.5 flex items-center gap-1.5">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-9 px-2 md:px-3 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all flex items-center gap-1.5"
+                                                disabled={isLoading || isStreaming}
+                                            >
+                                                <Cpu className="w-4 h-4" />
+                                                <span className="hidden md:inline text-xs font-bold uppercase tracking-tighter">
+                                                    {SUPPORTED_LLMS[selectedModel]?.split(' ')[0]}
+                                                </span>
+                                                <ChevronDown className="w-3 h-3 opacity-50" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-48 mb-2">
+                                            {Object.entries(SUPPORTED_LLMS).map(([id, name]) => (
+                                                <DropdownMenuItem
+                                                    key={id}
+                                                    onClick={() => onModelChange(id as SupportedModel)}
+                                                    className={cn(
+                                                        "text-xs font-medium cursor-pointer",
+                                                        selectedModel === id && "bg-primary/10 text-primary"
+                                                    )}
+                                                >
+                                                    {name}
+                                                </DropdownMenuItem>
+                                            ))}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+
+                                    <Button
+                                        size="icon"
+                                        type="submit"
+                                        className={cn(
+                                            "h-9 w-9 rounded-full transition-all duration-300",
+                                            isStreaming ? "bg-muted cursor-not-allowed" : "bg-primary"
+                                        )}
+                                        disabled={!input.trim() || isLoading || isStreaming}
+                                    >
+                                        {isStreaming ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : <Send className="w-4 h-4" />}
+                                    </Button>
+                                </div>
                             </div>
                         </form>
                         <p className="text-center text-[10px] text-muted-foreground mt-2 uppercase tracking-widest font-bold opacity-50">

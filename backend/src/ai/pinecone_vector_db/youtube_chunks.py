@@ -70,7 +70,7 @@ class PineconeClient:
 
 
     async def retrieve_context(
-        self, query: str, user_id: str, video_id: str, k: int = 1
+        self, query: str, user_id: str, video_id: str, k: int = 4
     ) -> List[Dict]:
         """
         Retrieves relevant context from the video based on the user query.

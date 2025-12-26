@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from src.utils import get_video_id
 from uuid import UUID
-from typing import Optional, Any, List
+from typing import Optional, Any, List, Literal
 from datetime import datetime
 from .exceptions import InvalidYoutubeURLError
 
@@ -9,6 +9,15 @@ from .exceptions import InvalidYoutubeURLError
 class AgentQueryData(BaseModel):
     query: str
     video_id: str
+    model: Literal[
+        "openai/gpt-oss-120b",
+        "openai/gpt-oss-20b",
+        "meta-llama/llama-4-scout-17b-16e-instruct",
+        "qwen/qwen3-32b",
+        "llama-3.1-8b-instant",
+        "llama-3.3-70b-versatile",
+        "moonshotai/kimi-k2-instruct-0905"
+    ] = "openai/gpt-oss-120b"
 
 
 class CreateChatSchema(BaseModel):
@@ -58,7 +67,9 @@ class ResponseChatSchema(BaseModel):
 class ResponseQASchema(BaseModel):
     query: str
     answer: str
-    chat_uid: UUID
+    chat_uid: str
+
+    model_config = ConfigDict(from_attributes=True, extra="ignore") 
 
 
 class ResponseChatDataSchema(BaseModel):

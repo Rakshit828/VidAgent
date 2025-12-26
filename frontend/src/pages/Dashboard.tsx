@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppSidebar } from '../components/layout/AppSidebar';
 import { ChatArea } from '../components/chat/ChatArea';
 import { Video, Menu } from 'lucide-react';
@@ -7,6 +8,9 @@ import { Button } from '../components/ui/button-shadcn';
 import { cn, extractYouTubeId } from '../lib/utils';
 import { useChats, useCreateAndProcessChat, useDeleteChat, useUpdateChat, useChatData } from '../hooks/api/useChat';
 import { useAgentStream } from '../hooks/useAgentStream';
+import { chatApi } from '../api/chats';
+import { DEFAULT_LLM } from '../constants/llms';
+import type { SupportedModel } from '../types/chats.api';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 import { toast } from 'sonner';
 import type { MockMessage } from '../mock/data';
@@ -20,6 +24,7 @@ import type { QA } from '../types';
 const Dashboard = () => {
     const { chatId } = useParams<{ chatId: string }>();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
 
     // API Hooks for data fetching and mutations
     const { data: chatsData } = useChats();
@@ -38,8 +43,9 @@ const Dashboard = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [loadingLabel, setLoadingLabel] = useState("");
     const [streamingMessageId, setStreamingMessageId] = useState("");
+    const [selectedModel, setSelectedModel] = useState<SupportedModel>(DEFAULT_LLM as SupportedModel);
 
-    // Agent Streaming Hook - Only instantiate if we have a chatId
+    // Agent Streaming Hook
     const {
         isStreaming,
         statusMessage,
@@ -47,8 +53,8 @@ const Dashboard = () => {
         cancelStream
     } = useAgentStream({
         chatId: chatId || '',
-        onStreamComplete: (finalMessage) => {
-            // Update the message with final content
+        onStreamComplete: async (query, answer) => {
+            // 1. Update local UI state
             setMessages(prev => {
                 const filtered = prev.filter(m => m.id !== streamingMessageId);
                 return [
@@ -56,11 +62,46 @@ const Dashboard = () => {
                     {
                         id: streamingMessageId,
                         role: 'assistant',
-                        content: finalMessage,
+                        content: answer,
                         timestamp: new Date().toLocaleTimeString()
                     }
                 ];
             });
+
+            // 2. Save Q&A to database
+            if (!chatId) return;
+
+            try {
+                await chatApi.createQA(chatId, {
+                    query,
+                    answer
+                });
+
+                // 3. Manually update the cache with the new Q&A
+                queryClient.setQueryData(['chat-data', chatId], (old: any) => {
+                    if (!old) return old;
+
+                    return {
+                        ...old,
+                        data: {
+                            ...old.data,
+                            questions_answers: [
+                                ...(old.data?.questions_answers || []),
+                                {
+                                    query,
+                                    answer,
+                                    created_at: new Date().toISOString()
+                                }
+                            ]
+                        }
+                    };
+                });
+
+                console.log('Q&A saved successfully');
+            } catch (error) {
+                console.error('Failed to save Q&A:', error);
+                toast.error('Failed to save conversation. Please try again.');
+            }
         },
         onError: (error) => {
             toast.error(`Agent Error: ${error.message}`);
@@ -165,7 +206,7 @@ const Dashboard = () => {
         const assistantId = (Date.now() + 1).toString();
         setStreamingMessageId(assistantId);
 
-        const finalResponse = await startStream(text, videoId);
+        const finalResponse = await startStream(text, videoId, selectedModel);
 
         if (!finalResponse) {
             // Stream was cancelled or errored - remove placeholder if needed
@@ -236,6 +277,8 @@ const Dashboard = () => {
                         agentStatus={statusMessage}
                         onSendMessage={handleSendMessage}
                         videoUrl={chats.find(c => c.uuid === chatId)?.youtube_video_url}
+                        selectedModel={selectedModel}
+                        onModelChange={setSelectedModel}
                     />
                 </div>
             </main>

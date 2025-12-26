@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy.ext.asyncio.session import AsyncSession
-
+from loguru import logger
 from .schemas import (
     CreateQASchema,
     ResponseQASchema,
@@ -18,6 +18,7 @@ from typing import Dict, List
 from src.ai.exceptions import TranscriptDoesNotExistError, TranscriptAlreadyExistError
 from src.ai.agent import AgentContext, AgentState
 from src.app_responses import SuccessResponse, AppError
+from src.ai.chat_models import ChatModels
 
 chats_router = APIRouter()
 
@@ -195,6 +196,8 @@ async def get_response_from_llm(
     decoded_token_data: Dict = Depends(AccessTokenBearer()),
 ):
     user_id = decoded_token_data["sub"]
+    
+    logger.info(f"The agent query data is {agent_query_data}")
 
     # transcript_exists = (
     #     await request.app.state.components.vector_db.check_for_transcript(
@@ -205,6 +208,7 @@ async def get_response_from_llm(
     #     raise AppError(TranscriptDoesNotExistError())
 
     context = {
+        "chat_model": ChatModels(agent_query_data.model),
         "components": request.app.state.components,
         "user_id": user_id,
         "video_id": agent_query_data.video_id,

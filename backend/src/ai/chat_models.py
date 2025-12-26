@@ -10,8 +10,8 @@ class ChatModels:
         "meta-llama/llama-4-scout-17b-16e-instruct",
     ]
 
-    def __init__(self):
-        self.llm = ChatGroq(model="openai/gpt-oss-120b", temperature=0)
+    def __init__(self, model_name: str = AVAILABLE_MODELS[0]):
+        self.llm = ChatGroq(model=model_name, temperature=0)
 
     async def use_model(
         self, model_name: str = AVAILABLE_MODELS[0], temperature: float = 0

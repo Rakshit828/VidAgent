@@ -8,7 +8,10 @@ class Prompts(enum.Enum):
         You are given a YouTube video transcript as context.
         Answer the query using only the information from the context.
         If the context is insufficient, clearly say so.
-        Respond clearly and naturally, in the same language as the query.
+        Respond clearly and naturally. **Respond in the same language as the query.**
+
+        QUERY:
+        {user_query}
 
         PREVIOUS CONVERSATION:
         {conversation_history}
@@ -16,8 +19,6 @@ class Prompts(enum.Enum):
         CONTEXT:
         {context}
 
-        QUERY:
-        {user_query}
     """,
         input_variables=["context", "user_query", "conversation_history"],
     )
