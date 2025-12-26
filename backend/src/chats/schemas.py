@@ -5,6 +5,12 @@ from typing import Optional, Any, List
 from datetime import datetime
 from .exceptions import InvalidYoutubeURLError
 
+
+class AgentQueryData(BaseModel):
+    query: str
+    video_id: str
+
+
 class CreateChatSchema(BaseModel):
     title: str
     youtube_video_url: str = Field(alias="youtubeVideoUrl")

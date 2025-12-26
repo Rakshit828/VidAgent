@@ -1,16 +1,21 @@
 import React, { useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Button } from '../ui/button-shadcn';
 import { Input } from '../ui/input-shadcn';
 import { ScrollArea } from '../ui/scroll-area';
-import { Send, Bot, User, Youtube, Copy, Check, Video } from 'lucide-react';
+import { Send, Bot, User, Youtube, Copy, Check, Video, Sparkles, Loader2 } from 'lucide-react';
 import type { MockMessage } from '../../mock/data';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { cn, extractYouTubeId } from '../../lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
+
 interface ChatAreaProps {
     messages: MockMessage[];
     isLoading?: boolean;
+    isStreaming?: boolean;
+    agentStatus?: string; // Now expects the user-friendly message directly
     onSendMessage: (message: string) => void;
     videoUrl?: string; // For embedding
 }
@@ -18,6 +23,8 @@ interface ChatAreaProps {
 export function ChatArea({
     messages,
     isLoading,
+    isStreaming,
+    agentStatus,
     onSendMessage,
     videoUrl
 }: ChatAreaProps) {
@@ -29,11 +36,11 @@ export function ChatArea({
         if (scrollRef.current) {
             scrollRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [messages, isLoading]);
+    }, [messages, isLoading, isStreaming]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (input.trim()) {
+        if (input.trim() && !isLoading && !isStreaming) {
             onSendMessage(input);
             setInput('');
         }
@@ -162,12 +169,12 @@ export function ChatArea({
                         <div
                             key={msg.id}
                             className={cn(
-                                "flex gap-4 w-full",
+                                "flex gap-4 w-full animate-in fade-in slide-in-from-bottom-2 duration-300",
                                 msg.role === 'user' ? "flex-row-reverse" : "flex-row"
                             )}
                         >
                             <Avatar className={cn(
-                                "w-8 h-8",
+                                "w-8 h-8 shrink-0",
                                 msg.role === 'assistant' ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
                             )}>
                                 <AvatarFallback>
@@ -176,20 +183,28 @@ export function ChatArea({
                             </Avatar>
 
                             <div className={cn(
-                                "group relative flex flex-col gap-1 max-w-[80%]",
+                                "group relative flex flex-col gap-1 max-w-[85%]",
                                 msg.role === 'user' ? "items-end" : "items-start"
                             )}>
                                 <div className={cn(
-                                    "rounded-2xl px-4 py-3 text-sm shadow-sm",
+                                    "rounded-2xl px-4 py-3 text-sm shadow-sm overflow-hidden",
                                     msg.role === 'user'
                                         ? "bg-primary text-primary-foreground rounded-tr-sm"
                                         : "bg-muted/50 border border-border rounded-tl-sm text-foreground"
                                 )}>
-                                    {msg.content}
+                                    {msg.role === 'assistant' ? (
+                                        <div className="prose prose-sm dark:prose-invert max-w-none wrap-break-word">
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                {msg.content}
+                                            </ReactMarkdown>
+                                        </div>
+                                    ) : (
+                                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                                    )}
                                 </div>
 
-                                {msg.role === 'assistant' && (
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -right-8 top-2">
+                                {msg.role === 'assistant' && msg.content && (
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -right-8 top-2 hidden md:block">
                                         <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
@@ -205,9 +220,35 @@ export function ChatArea({
                             </div>
                         </div>
                     ))}
-                    {isLoading && (
-                        <div className="flex gap-4 w-full">
-                            <Avatar className="w-8 h-8 bg-primary/10 text-primary">
+
+                    {/* Agent Streaming Indicator */}
+                    {isStreaming && (
+                        <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <div className="flex gap-4 w-full">
+                                <Avatar className="w-8 h-8 bg-primary/10 text-primary animate-pulse">
+                                    <AvatarFallback><Bot className="w-4 h-4" /></AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col gap-2 pt-1.5">
+                                    {agentStatus && (
+                                        <div className="flex items-center gap-2 text-xs font-medium text-primary bg-primary/5 px-3 py-1.5 rounded-full border border-primary/10 w-fit">
+                                            <Sparkles className="w-3 h-3 animate-pulse" />
+                                            <span>{agentStatus}</span>
+                                            <Loader2 className="w-3 h-3 animate-spin ml-1" />
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-1.5 bg-muted/30 px-4 py-3 rounded-2xl rounded-tl-sm w-fit">
+                                        <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                        <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                        <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {isLoading && !isStreaming && (
+                        <div className="flex gap-4 w-full opacity-70">
+                            <Avatar className="w-8 h-8 bg-muted text-muted-foreground">
                                 <AvatarFallback><Bot className="w-4 h-4" /></AvatarFallback>
                             </Avatar>
                             <div className="flex items-center gap-1 bg-muted/30 px-4 py-3 rounded-2xl rounded-tl-sm">
@@ -217,33 +258,39 @@ export function ChatArea({
                             </div>
                         </div>
                     )}
-                    <div ref={scrollRef} />
+                    <div ref={scrollRef} className="h-4" />
                 </div>
             </ScrollArea>
 
-            {/* Input Footer - Only show if we have an active session (videoUrl or messages) */}
+            {/* Input Footer */}
             {(videoUrl || messages.length > 0) && (
                 <div className="p-4 border-t border-border bg-background/50 backdrop-blur-sm">
                     <div className="max-w-3xl mx-auto relative">
-                        <form onSubmit={handleSubmit} className="relative">
-                            <Input
-                                value={input}
-                                onChange={(e) => setInput(e.target.value)}
-                                placeholder="Ask something about the video..."
-                                className="pr-12 py-6 rounded-full shadow-sm border-muted-foreground/20 focus-visible:ring-primary/20 bg-muted/50"
-                                disabled={isLoading}
-                            />
-                            <Button
-                                size="icon"
-                                type="submit"
-                                className="absolute right-1.5 top-1.5 h-9 w-9 rounded-full"
-                                disabled={!input.trim() || isLoading}
-                            >
-                                <Send className="w-4 h-4" />
-                            </Button>
+                        <form onSubmit={handleSubmit} className="relative group">
+                            <div className="absolute -inset-0.5 bg-linear-to-r from-primary/20 to-purple-600/20 rounded-full blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
+                            <div className="relative">
+                                <Input
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    placeholder={isStreaming ? "Wait for AI response..." : "Ask something about the video..."}
+                                    className="pr-12 py-6 rounded-full shadow-sm border-muted-foreground/20 focus-visible:ring-primary/20 bg-muted/10 backdrop-blur-sm"
+                                    disabled={isLoading || isStreaming}
+                                />
+                                <Button
+                                    size="icon"
+                                    type="submit"
+                                    className={cn(
+                                        "absolute right-1.5 top-1.5 h-9 w-9 rounded-full transition-all duration-300",
+                                        isStreaming ? "bg-muted cursor-not-allowed" : "bg-primary"
+                                    )}
+                                    disabled={!input.trim() || isLoading || isStreaming}
+                                >
+                                    {isStreaming ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : <Send className="w-4 h-4" />}
+                                </Button>
+                            </div>
                         </form>
-                        <p className="text-center text-xs text-muted-foreground mt-2">
-                            ChatTube can make mistakes. Consider checking important information.
+                        <p className="text-center text-[10px] text-muted-foreground mt-2 uppercase tracking-widest font-bold opacity-50">
+                            ChatTube AI Analyzer
                         </p>
                     </div>
                 </div>

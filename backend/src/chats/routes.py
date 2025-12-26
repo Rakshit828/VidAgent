@@ -9,6 +9,7 @@ from .schemas import (
     UpdateChatSchema,
     ResponseChatSchema,
     ResponseChatDataSchema,
+    AgentQueryData,
 )
 from .services import chat_service
 from src.db.postgres_db import get_session
@@ -186,43 +187,44 @@ async def fetch_and_store_video(
     )
 
 
-@chats_router.get("/response/{video_id}/{query}")
+@chats_router.post("/agent/{chat_id}")
 async def get_response_from_llm(
     request: Request,
-    video_id: str,
-    query: str,
+    chat_id: str,
+    agent_query_data: AgentQueryData,
     decoded_token_data: Dict = Depends(AccessTokenBearer()),
 ):
     user_id = decoded_token_data["sub"]
 
-    transcript_exists = (
-        await request.app.state.components.vector_db.check_for_transcript(
-            user_id, video_id
-        )
-    )
-    if not transcript_exists:
-        raise TranscriptDoesNotExistError()
+    # transcript_exists = (
+    #     await request.app.state.components.vector_db.check_for_transcript(
+    #         user_id, agent_query_data.video_id
+    #     )
+    # )
+    # if not transcript_exists:
+    #     raise AppError(TranscriptDoesNotExistError())
 
     context = {
         "components": request.app.state.components,
         "user_id": user_id,
-        "video_id": video_id,
-        "chat_id": "adfld7fadfdsf",
+        "video_id": agent_query_data.video_id,
+        "chat_id": chat_id,
     }
 
-    input_state = {"user_query": query}
+    input_state = {"user_query": agent_query_data.query, "conversation_history": []}
 
-    async for mode, chunk in request.app.state.agent.run_agent(
-        input_state=input_state, context=context
-    ):
-        if mode == "updates":
-            print("Update : ", chunk)
-        if mode == "messages":
-            print(chunk[0].content, end="", flush=True)
+    # async for stream in request.app.state.agent.run_agent(
+    #     input_state=input_state, context=context
+    # ):
+    #     print(stream) if stream else None
 
-    return "Agent is running"
 
-    # return StreamingResponse(
-    #     request.app.state.agent.run_agent(input_state=input_state, context=context),
-    #     media_type="event/stream"
-    # )
+    return StreamingResponse(
+        request.app.state.agent.run_agent(input_state=input_state, context=context),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",  # critical for nginx (later implementation)
+        }
+    )

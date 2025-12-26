@@ -70,7 +70,7 @@ class PineconeClient:
 
 
     async def retrieve_context(
-        self, query: str, user_id: str, video_id: str, k: int = 4
+        self, query: str, user_id: str, video_id: str, k: int = 1
     ) -> List[Dict]:
         """
         Retrieves relevant context from the video based on the user query.
@@ -92,7 +92,7 @@ class PineconeClient:
                     "top_k": k,
                     "filter": {"video_id": video_id},
                 },
-                fields=["text"],
+                fields=["text", "start_time", "end_time"],
             )
         except PineconeApiException as e:
             print(e)

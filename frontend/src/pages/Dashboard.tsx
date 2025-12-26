@@ -4,16 +4,18 @@ import { AppSidebar } from '../components/layout/AppSidebar';
 import { ChatArea } from '../components/chat/ChatArea';
 import { Video, Menu } from 'lucide-react';
 import { Button } from '../components/ui/button-shadcn';
-import { cn } from '../lib/utils';
+import { cn, extractYouTubeId } from '../lib/utils';
 import { useChats, useCreateAndProcessChat, useDeleteChat, useUpdateChat, useChatData } from '../hooks/api/useChat';
+import { useAgentStream } from '../hooks/useAgentStream';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
+import { toast } from 'sonner';
 import type { MockMessage } from '../mock/data';
 import type { QA } from '../types';
 
 /**
  * Main Dashboard Component.
  * Orchestrates Chats, Sidebar and ChatArea.
- * Now integrated with real API hooks for CRUD operations.
+ * Now integrated with real API hooks and Agent streaming.
  */
 const Dashboard = () => {
     const { chatId } = useParams<{ chatId: string }>();
@@ -35,6 +37,35 @@ const Dashboard = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [loadingLabel, setLoadingLabel] = useState("");
+    const [streamingMessageId, setStreamingMessageId] = useState("");
+
+    // Agent Streaming Hook - Only instantiate if we have a chatId
+    const {
+        isStreaming,
+        statusMessage,
+        startStream,
+        cancelStream
+    } = useAgentStream({
+        chatId: chatId || '',
+        onStreamComplete: (finalMessage) => {
+            // Update the message with final content
+            setMessages(prev => {
+                const filtered = prev.filter(m => m.id !== streamingMessageId);
+                return [
+                    ...filtered,
+                    {
+                        id: streamingMessageId,
+                        role: 'assistant',
+                        content: finalMessage,
+                        timestamp: new Date().toLocaleTimeString()
+                    }
+                ];
+            });
+        },
+        onError: (error) => {
+            toast.error(`Agent Error: ${error.message}`);
+        }
+    });
 
     // Use current API loading state
     const isLoading = isChatDataLoading;
@@ -63,12 +94,15 @@ const Dashboard = () => {
         }
     }, [currentChatData, chatId]);
 
-    /**
-     * Handles the sequential process of creating a chat and processing the video.
-     */
+    // Cleanup stream on unmount
+    useEffect(() => {
+        return () => {
+            cancelStream();
+        };
+    }, [cancelStream]);
+
     const handleCreateChat = async (url: string) => {
         try {
-            // The hook handles statuses internally via callbacks
             const newChat = await createAndProcessChat.mutateAsync({
                 url,
                 onStatusChange: (status) => setLoadingLabel(status)
@@ -76,19 +110,16 @@ const Dashboard = () => {
 
             if (newChat && 'uuid' in newChat) {
                 setIsSidebarOpen(false);
-                // Navigate to the newly created chat
                 navigate(`/chat/${newChat.uuid}`);
             }
         } catch (error) {
             console.error("Creation failed", error);
+            toast.error("Failed to create chat");
         } finally {
             setLoadingLabel("");
         }
     };
 
-    /**
-     * Deletes a chat and redirects if it's the currently active one.
-     */
     const handleDeleteChat = async (id: string) => {
         if (window.confirm("Are you sure you want to delete this analysis?")) {
             await deleteChatMutation.mutateAsync(id);
@@ -98,9 +129,6 @@ const Dashboard = () => {
         }
     };
 
-    /**
-     * Updates the chat title.
-     */
     const handleRenameChat = async (id: string, newTitle: string) => {
         await updateChatMutation.mutateAsync({ id, title: newTitle });
     };
@@ -110,24 +138,39 @@ const Dashboard = () => {
         setIsSidebarOpen(false);
     };
 
-    const handleSendMessage = (text: string) => {
+    const handleSendMessage = async (text: string) => {
         if (!chatId) {
-            // Home screen case: input is likely a YouTube URL
             handleCreateChat(text);
             return;
         }
 
-        // Mock chat addition logic - locally adding the user message
-        const newMsg: MockMessage = {
+        const videoUrl = chats.find(c => c.uuid === chatId)?.youtube_video_url;
+        const videoId = videoUrl ? extractYouTubeId(videoUrl) : null;
+
+        if (!videoId) {
+            toast.error("Unable to find video ID for this chat");
+            return;
+        }
+
+        // 1. Add User Message Locally
+        const userMsg: MockMessage = {
             id: Date.now().toString(),
             role: 'user',
             content: text,
-            timestamp: 'Now'
+            timestamp: new Date().toLocaleTimeString()
         };
+        setMessages(prev => [...prev, userMsg]);
 
-        setMessages(prev => [...prev, newMsg]);
+        // 2. Start Agent Streaming
+        const assistantId = (Date.now() + 1).toString();
+        setStreamingMessageId(assistantId);
 
-        // TODO: Integrate with real LLM response API
+        const finalResponse = await startStream(text, videoId);
+
+        if (!finalResponse) {
+            // Stream was cancelled or errored - remove placeholder if needed
+            toast.warning("Response generation was interrupted");
+        }
     };
 
     return (
@@ -189,6 +232,8 @@ const Dashboard = () => {
                     <ChatArea
                         messages={messages}
                         isLoading={isLoading}
+                        isStreaming={isStreaming}
+                        agentStatus={statusMessage}
                         onSendMessage={handleSendMessage}
                         videoUrl={chats.find(c => c.uuid === chatId)?.youtube_video_url}
                     />
