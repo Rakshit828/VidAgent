@@ -27,7 +27,7 @@ ChatTube AI is a production-grade, agentic RAG (Retrieval-Augmented Generation) 
 
 ## 🏗️ High-Level Architecture
 
-1.  **Ingestion Pipeline**: YouTube URL → Transcript Extraction → Recursive Character Splitting → HuggingFace Embeddings → Pinecone Vector Store.
+1.  **Ingestion Pipeline**: YouTube URL → Transcript Extraction → Recursive Character Splitting → Pinecone Vector Store.
 2.  **Agentic Workflow**: User Query → LangGraph Decision Maker → Vector Similarity Search (Metadata Filtered by Video ID) → Context Consolidation → LLM Response.
 3.  **Communication**: Frontend communicates with FastAPI via REST for configuration and SSE for high-concurrency streaming.
 
@@ -153,4 +153,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ## ❤️ Acknowledgments
 - UI inspiration from ChatGPT and Claude.
 - Groq for providing lightning-fast LLM inference.
-- The open-source communities behind LangChain and Radix UI.
+- Google Antigravity for frontend development.
