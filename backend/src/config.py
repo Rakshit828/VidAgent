@@ -16,16 +16,9 @@ class Config(BaseSettings):
     REFRESH_TOKEN_EXPIRY_DAYS: int
     ACCESS_TOKEN_EXPIRY_MINUTES: int
 
-    MAIL_USERNAME: str
-    MAIL_PASSWORD: str
-    MAIL_SERVER: str
-    MAIL_PORT: int
-    MAIL_FROM: str
+    RESEND_API_KEY: str
     MAIL_FROM_NAME: str
-    MAIL_STARTTLS: bool
-    MAIL_SSL_TLS: bool
-    USE_CREDENTIALS: bool
-    VALIDATE_CERTS: bool
+    RESEND_FROM_EMAIL: str
 
     model_config = SettingsConfigDict(
         env_file='.env',

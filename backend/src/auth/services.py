@@ -1,37 +1,19 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from fastapi import BackgroundTasks
 from .models import Users
 from .schemas import UserCreateSchema, UserLogInSchema
 from .utils import (
     generate_password_hash,
     verify_user,
     create_jwt_tokens,
-    create_url_safe_token,
 )
-from src.mail_service import mail, create_verification_email_body, create_message
 from src.config import CONFIG
 from .exceptions import (
     InvalidEmailError,
     InvalidPasswordError,
     EmailAlreadyExistsError,
-    EmailNotVerifiedError,
 )
 from src.app_responses import AppError
-
-
-class EmailService:
-    VERIFICATION_LINK = f"{CONFIG.BACKEND_URL}/api/v1/auth/verify-email?token="
-
-    async def verification_email(self, email: str, background_tasks: BackgroundTasks):
-        token = await create_url_safe_token(email=email)
-        verification_link = self.VERIFICATION_LINK + token
-        body = await create_verification_email_body(verification_link=verification_link)
-        message = await create_message(
-            recipients=[email], subject="Verify Email", body=body
-        )
-        background_tasks.add_task(mail.send_message, message)
-        return True
     
 
 class AuthService:

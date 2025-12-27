@@ -48,7 +48,7 @@ export function ChatArea({
     return (
         <div className="flex flex-col h-full overflow-hidden bg-background">
             <ScrollArea className="flex-1 p-4">
-                <div className="max-w-3xl mx-auto space-y-6 pb-32 h-full flex flex-col">
+                <div className="max-w-3xl mx-auto space-y-6 pb-40 h-full flex flex-col">
                     {/* YouTube Video Player */}
                     {videoUrl && (
                         <div className="rounded-xl overflow-hidden border border-border shadow-xl mb-6 bg-black/5 shrink-0 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -180,7 +180,7 @@ export function ChatArea({
                                 msg.role === 'user' ? "items-end" : "items-start"
                             )}>
                                 <div className={cn(
-                                    "rounded-2xl px-5 py-3 text-base shadow-sm overflow-hidden transition-colors",
+                                    "rounded-2xl px-5 py-3 text-base shadow-sm overflow-hidden transition-colors wrap-break-word",
                                     msg.role === 'user'
                                         ? "bg-primary text-primary-foreground rounded-tr-sm"
                                         : "bg-muted/80 border border-border rounded-tl-sm text-foreground shadow-sm"
@@ -192,7 +192,7 @@ export function ChatArea({
                                             </ReactMarkdown>
                                         </div>
                                     ) : (
-                                        <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+                                        <div className="whitespace-pre-wrap wrap-break-word leading-relaxed">{msg.content}</div>
                                     )}
                                 </div>
 

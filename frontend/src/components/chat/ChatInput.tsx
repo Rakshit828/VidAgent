@@ -27,13 +27,19 @@ export function ChatInput({
     onModelChange,
 }: ChatInputProps) {
     const [input, setInput] = useState('');
+    const [isOverflowing, setIsOverflowing] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     const adjustHeight = () => {
         const textarea = textareaRef.current;
         if (textarea) {
             textarea.style.height = 'auto';
-            textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+            const scHeight = textarea.scrollHeight;
+            const maxHeight = 120;
+            const newHeight = Math.min(scHeight, maxHeight);
+            textarea.style.height = `${newHeight}px`;
+            // Only set overflowing if it truly exceeds max height by more than a pixel
+            setIsOverflowing(scHeight > maxHeight + 2);
         }
     };
 
@@ -46,6 +52,7 @@ export function ChatInput({
         if (input.trim() && !isLoading && !isStreaming) {
             onSendMessage(input);
             setInput('');
+            setIsOverflowing(false);
         }
     };
 
@@ -108,7 +115,7 @@ export function ChatInput({
                             placeholder={isStreaming ? "Wait for AI response..." : "Ask something about the video..."}
                             className={cn(
                                 "flex-1 bg-transparent border-0 ring-0 focus:ring-0 outline-none resize-none py-1.5 min-h-[32px] max-h-[120px] text-[15px] leading-relaxed placeholder:text-muted-foreground/40 custom-scrollbar",
-                                input.split('\n').length > 4 || (textareaRef.current?.scrollHeight || 0) > 110 ? "overflow-y-auto" : "overflow-hidden"
+                                isOverflowing ? "overflow-y-auto" : "overflow-y-hidden"
                             )}
                             disabled={isLoading || isStreaming}
                             rows={1}
