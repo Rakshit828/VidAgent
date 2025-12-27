@@ -2,7 +2,7 @@
 
 ## Make Videos Talk
 
-ChatTube AI is a production-grade, agentic RAG (Retrieval-Augmented Generation) application designed to transform how you consume YouTube content. Instead of just watching, you can now **converse** with any video. Powered by an advanced AI agent, ChatTube analyzes transcripts, retrieves relevant context, and provides real-time, cited answers to your deepest questions.
+VidAgent is an agentic RAG (Retrieval-Augmented Generation) application designed to transform how you consume YouTube content. Instead of just watching, you can now **converse** with any video. Powered by an advanced AI agent, ChatTube analyzes transcripts, retrieves relevant context, and provides real-time, cited answers to your deepest questions.
 
 ---
 
