@@ -9,12 +9,14 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
+import { StreamingBadge } from './StreamingBadge';
 import type { Chat } from '../../types';
 
 interface ChatListItemProps {
     chat: Chat;
     isActive: boolean;
     isCollapsed: boolean;
+    isStreaming?: boolean;
     onSelect: (uuid: string) => void;
     onRename: (uuid: string, newTitle: string) => void;
     onDelete: (uuid: string) => void;
@@ -24,6 +26,7 @@ export function ChatListItem({
     chat,
     isActive,
     isCollapsed,
+    isStreaming,
     onSelect,
     onRename,
     onDelete,
@@ -63,12 +66,17 @@ export function ChatListItem({
             <div
                 onClick={() => onSelect(chat.uuid)}
                 className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-md transition-colors hover:bg-muted cursor-pointer mx-auto",
+                    "relative flex h-10 w-10 items-center justify-center rounded-md transition-colors hover:bg-muted cursor-pointer mx-auto",
                     isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground"
                 )}
                 title={chat.title}
             >
                 <MessageSquare className="h-4 w-4" />
+                {isStreaming && (
+                    <div className="absolute -top-0.5 -right-0.5">
+                        <StreamingBadge variant="minimal" />
+                    </div>
+                )}
             </div>
         );
     }
@@ -82,7 +90,7 @@ export function ChatListItem({
             )}
         >
             {/* Title Container - flex-1 and w-0 are critical for truncation inside flex */}
-            <div className="flex-1 w-0 pr-8">
+            <div className="flex-1 w-0 pr-8 flex items-center gap-2">
                 {isEditing ? (
                     <Input
                         ref={inputRef}
@@ -94,9 +102,14 @@ export function ChatListItem({
                         className="h-6 py-0 px-1 text-sm bg-background/80 w-full"
                     />
                 ) : (
-                    <span className="block truncate">
-                        {chat.title}
-                    </span>
+                    <>
+                        <span className="block truncate">
+                            {chat.title}
+                        </span>
+                        {isStreaming && (
+                            <StreamingBadge variant="minimal" className="shrink-0" />
+                        )}
+                    </>
                 )}
             </div>
 

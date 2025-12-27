@@ -13,3 +13,9 @@ class ChatNotFoundError(ErrorResponse[T]):
     error: str = "chat_not_found"
     message: str = "Chat with provided id not found."
     data: T | None = None
+
+class QADoesntExistError(ErrorResponse[T]):
+    status_code: int = status.HTTP_404_NOT_FOUND
+    error: str = "qas_doesnt_exist"
+    message: str = "No data found for the provided chat id."
+    data: T | None = None

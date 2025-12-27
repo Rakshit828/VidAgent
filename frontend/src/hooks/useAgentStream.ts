@@ -1,53 +1,59 @@
-import { useState, useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { AGENT_STEP_MESSAGES, DEFAULT_AGENT_MESSAGE } from '../constants/agentSteps';
 import type { SupportedModel, AgentQueryData } from '../types/chats.api';
+import { useStreamStore } from '../store/useStreamStore';
 
 interface UseAgentStreamOptions {
     chatId: string;
-    onStreamComplete?: (query: string, answer: string) => void;
-    onError?: (error: Error) => void;
+    onStreamStart?: (chatId: string, query: string, videoId: string) => void;
+    onStreamProgress?: (chatId: string, content: string) => void;
+    onStreamComplete?: (chatId: string, query: string, answer: string) => void;
+    onError?: (chatId: string, error: Error) => void;
 }
 
 interface AgentStreamResult {
     isStreaming: boolean;
     agentStatus: string;
     statusMessage: string;
-    startStream: (query: string, videoId: string, model: SupportedModel) => Promise<string | null>;
+    startStream: (query: string, videoId: string, model: SupportedModel, streamingMessageId: string) => Promise<string | null>;
     cancelStream: () => void;
 }
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
 
+// Global map to store abort controllers per chat
+const abortControllers = new Map<string, AbortController>();
+
 /**
  * Custom hook to handle Server-Sent Events (SSE) streaming from the AI Agent.
  * 
- * This hook manages the connection to the backend agent endpoint, parses
- * SSE events (agent_step and token), and provides real-time updates to the UI.
+ * Now supports background streaming - streams continue even when switching chats.
+ * Integrates with global stream store to track multiple concurrent streams.
  * 
  * @param options - Configuration options for the stream
  * @returns Stream state and control functions
- * 
- * @example
- * ```tsx
- * const { isStreaming, agentStatus, statusMessage, startStream } = useAgentStream({
- *   chatId: 'chat-uuid',
- *   onStreamComplete: (message) => console.log('Final:', message),
- * });
- * 
- * // Start streaming
- * const response = await startStream('What is this video about?', 'video-id');
- * ```
  */
 export const useAgentStream = ({
     chatId,
+    onStreamStart,
+    onStreamProgress,
     onStreamComplete,
     onError,
 }: UseAgentStreamOptions): AgentStreamResult => {
-    const [isStreaming, setIsStreaming] = useState(false);
-    const [agentStatus, setAgentStatus] = useState('');
+    const streamStore = useStreamStore();
+    const currentStream = useStreamStore((state) => state.activeStreams.get(chatId));
     
-    // Use a ref to track the abort controller for cleanup
-    const abortControllerRef = useRef<AbortController | null>(null);
+    // Get streaming state from the global store
+    const isStreaming = currentStream?.isActive || false;
+    const agentStatus = currentStream?.agentStatus || '';
+    
+    // Use a ref to track the current chat's controller
+    const currentChatIdRef = useRef(chatId);
+
+    // Update ref when chatId changes
+    useEffect(() => {
+        currentChatIdRef.current = chatId;
+    }, [chatId]);
 
     /**
      * Get the user-friendly status message for the current agent step
@@ -57,29 +63,25 @@ export const useAgentStream = ({
         : '';
 
     /**
-     * Cancel the ongoing stream
+     * Cancel the ongoing stream for this chat
      */
     const cancelStream = useCallback(() => {
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
-            abortControllerRef.current = null;
+        const controller = abortControllers.get(chatId);
+        if (controller) {
+            controller.abort();
+            abortControllers.delete(chatId);
         }
-        setIsStreaming(false);
-        setAgentStatus('');
-    }, []);
+        streamStore.removeStream(chatId);
+    }, [chatId, streamStore]);
 
     /**
      * Internal function to perform the actual stream request
-     * 
-     * @param query - User's question
-     * @param videoId - YouTube video ID
-     * @param retryCount - Current retry attempt (0 = first attempt)
-     * @returns The complete assistant response or null on error
      */
     const performStream = useCallback(async (
         query: string,
         videoId: string,
         model: SupportedModel,
+        streamingMessageId: string,
         retryCount: number = 0
     ): Promise<string | null> => {
         const MAX_RETRIES = 1;
@@ -91,14 +93,16 @@ export const useAgentStream = ({
             model,
         };
 
+        const controller = abortControllers.get(chatId);
+
         try {
             const response = await fetch(`${API_BASE_URL}/chats/agent/${chatId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                credentials: 'include', // Important for cookie-based auth
-                signal: abortControllerRef.current?.signal,
+                credentials: 'include',
+                signal: controller?.signal,
                 body: JSON.stringify(requestData),
             });
 
@@ -107,7 +111,6 @@ export const useAgentStream = ({
                 console.log('Access token expired during stream, refreshing...');
                 
                 try {
-                    // Attempt to refresh the access token
                     const refreshResponse = await fetch(`${API_BASE_URL}/auth/refresh`, {
                         method: 'GET',
                         credentials: 'include',
@@ -115,8 +118,7 @@ export const useAgentStream = ({
 
                     if (refreshResponse.ok) {
                         console.log('Token refreshed successfully, retrying stream...');
-                        // Recursively retry the stream with incremented retry count
-                        return await performStream(query, videoId, model, retryCount + 1);
+                        return await performStream(query, videoId, model, streamingMessageId, retryCount + 1);
                     } else {
                         throw new Error('Token refresh failed');
                     }
@@ -136,20 +138,15 @@ export const useAgentStream = ({
             }
 
             const decoder = new TextDecoder();
-            let buffer = ''; // Buffer for incomplete chunks
+            let buffer = '';
 
             while (true) {
                 const { done, value } = await reader.read();
                 
                 if (done) break;
 
-                // Decode the chunk and add to buffer
                 buffer += decoder.decode(value, { stream: true });
-                
-                // Split by double newline to get complete SSE messages
                 const messages = buffer.split('\n\n');
-                
-                // Keep the last incomplete message in the buffer
                 buffer = messages.pop() || '';
 
                 for (const message of messages) {
@@ -167,21 +164,29 @@ export const useAgentStream = ({
                         }
                     }
 
-                    // Process the event
                     if (currentEvent && currentData) {
                         if (currentEvent === 'agent_step') {
                             try {
                                 const parsed = JSON.parse(currentData);
-                                setAgentStatus(parsed.name || currentData);
+                                const stepName = parsed.name || currentData;
+                                const stepMessage = AGENT_STEP_MESSAGES[stepName] || DEFAULT_AGENT_MESSAGE;
+                                
+                                // Update global store
+                                streamStore.updateStreamStatus(chatId, stepName, stepMessage);
                             } catch {
-                                // If not JSON, treat as raw string
-                                setAgentStatus(currentData);
+                                const stepMessage = AGENT_STEP_MESSAGES[currentData] || DEFAULT_AGENT_MESSAGE;
+                                streamStore.updateStreamStatus(chatId, currentData, stepMessage);
                             }
                         } else if (currentEvent === 'token') {
                             try {
                                 const parsed = JSON.parse(currentData);
                                 if (parsed.text) {
                                     accumulatedContent += parsed.text;
+                                    
+                                    // Notify progress callback if provided
+                                    if (onStreamProgress) {
+                                        onStreamProgress(chatId, accumulatedContent);
+                                    }
                                 }
                             } catch (e) {
                                 console.warn('Failed to parse token data:', currentData);
@@ -194,40 +199,46 @@ export const useAgentStream = ({
             return accumulatedContent;
 
         } catch (error) {
-            // Re-throw to be caught by the outer handler
             throw error;
         }
-    }, [chatId]);
+    }, [chatId, streamStore, onStreamProgress]);
 
     /**
-     * Start streaming the agent response with automatic token refresh on 401
-     * 
-     * @param query - User's question about the video
-     * @param videoId - YouTube video ID
-     * @param model - Selection LLM model name
-     * @returns The complete assistant response or null on error
+     * Start streaming the agent response
      */
     const startStream = useCallback(async (
         query: string,
         videoId: string,
-        model: SupportedModel
+        model: SupportedModel,
+        streamingMessageId: string
     ): Promise<string | null> => {
-        // Cancel any existing stream
+        // Cancel any existing stream for this chat
         cancelStream();
 
-        // Create new abort controller for this request
+        // Create new abort controller for this chat
         const abortController = new AbortController();
-        abortControllerRef.current = abortController;
+        abortControllers.set(chatId, abortController);
 
-        setIsStreaming(true);
-        setAgentStatus('initializing');
+        // Add stream to global store
+        streamStore.addStream(chatId, {
+            streamingMessageId,
+            agentStatus: 'initializing',
+            statusMessage: AGENT_STEP_MESSAGES['initializing'] || 'Initializing...',
+            query,
+            videoId,
+        });
+
+        // Notify start callback
+        if (onStreamStart) {
+            onStreamStart(chatId, query, videoId);
+        }
 
         try {
-            const finalContent = await performStream(query, videoId, model, 0);
+            const finalContent = await performStream(query, videoId, model, streamingMessageId, 0);
 
-            // Stream complete - pass both query and answer to callback
+            // Stream complete - pass chatId, query and answer to callback
             if (onStreamComplete && finalContent) {
-                onStreamComplete(query, finalContent);
+                onStreamComplete(chatId, query, finalContent);
             }
 
             return finalContent;
@@ -235,24 +246,26 @@ export const useAgentStream = ({
         } catch (error) {
             // Don't treat abort as an error
             if (error instanceof Error && error.name === 'AbortError') {
-                console.log('Stream cancelled by user');
+                console.log(`[useAgentStream] Stream cancelled for chat: ${chatId}`);
                 return null;
             }
 
-            console.error('Agent streaming error:', error);
+            console.error(`[useAgentStream] Streaming error for chat ${chatId}:`, error);
             
             if (onError && error instanceof Error) {
-                onError(error);
+                onError(chatId, error);
             }
+
+            // Remove from store on error
+            streamStore.removeStream(chatId);
 
             return null;
 
         } finally {
-            setIsStreaming(false);
-            setAgentStatus('');
-            abortControllerRef.current = null;
+            // Cleanup abort controller
+            abortControllers.delete(chatId);
         }
-    }, [performStream, onStreamComplete, onError, cancelStream]);
+    }, [chatId, performStream, onStreamComplete, onStreamStart, onError, cancelStream, streamStore]);
 
     return {
         isStreaming,
@@ -261,4 +274,13 @@ export const useAgentStream = ({
         startStream,
         cancelStream,
     };
+};
+
+/**
+ * Utility function to cancel all streams globally
+ */
+export const cancelAllStreams = () => {
+    abortControllers.forEach((controller) => controller.abort());
+    abortControllers.clear();
+    useStreamStore.getState().clearAllStreams();
 };

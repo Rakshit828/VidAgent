@@ -1,3 +1,6 @@
+from sqlalchemy.orm.util import CascadeOptions
+from asyncpg.exceptions._base import FatalPostgresError
+from jedi.inference.arguments import TreeArguments
 from __future__ import annotations
 from typing import Optional, List, TYPE_CHECKING
 from uuid import UUID
@@ -33,15 +36,15 @@ class Chats(Base):
 
     __table_args__ = (
         Index("idx_user_uid", "user_uid"),
-        Index("idx_chat_id", "uuid")
+        Index("idx_chat_id", "uuid"),
     )
 
     user: Mapped[Optional["Users"]] = relationship(back_populates="chats")
+
     questions_answers: Mapped[List["QuestionsAnswers"]] = relationship(
         back_populates="chat",
         cascade="all, delete-orphan",
     )
-
 
 
 

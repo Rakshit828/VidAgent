@@ -101,7 +101,6 @@ class PineconeClient:
         results = filtered_results["result"]["hits"]
         return results
 
-
     async def delete_video_transcript(self, user_id, video_url_or_id):
         video_id = get_video_id(video_url_or_id)
         try:

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useStreamStore } from '../../store/useStreamStore';
 import { useLogout } from '../../hooks/api/useAuth';
 import {
     Plus,
@@ -46,6 +47,9 @@ export function AppSidebar({
     const navigate = useNavigate();
     // Getting user information from the Zustand Auth Store
     const user = useAuthStore((state) => state.user);
+    // Get active streams from stream store (Map is stable)
+    const activeStreams = useStreamStore((state) => state.activeStreams);
+    const activeStreamChatIds = new Set(activeStreams.keys());
     // TanStack Query Mutation for logging out
     const logoutMutation = useLogout();
 
@@ -138,6 +142,7 @@ export function AppSidebar({
                                 chat={chat}
                                 isActive={currentChatId === chat.uuid}
                                 isCollapsed={isCollapsed}
+                                isStreaming={activeStreamChatIds.has(chat.uuid)}
                                 onSelect={onSelectChat}
                                 onRename={onRenameChat}
                                 onDelete={onDeleteChat}

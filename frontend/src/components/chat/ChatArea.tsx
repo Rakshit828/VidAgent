@@ -4,7 +4,8 @@ import remarkGfm from 'remark-gfm';
 import { Button } from '../ui/button-shadcn';
 import { Input } from '../ui/input-shadcn';
 import { ScrollArea } from '../ui/scroll-area';
-import { Send, Bot, User, Youtube, Copy, Check, Video, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Youtube, Copy, Check, Video, Loader2 } from 'lucide-react';
+import { StreamingBadge } from './StreamingBadge';
 import type { MockMessage } from '../../mock/data';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { cn, extractYouTubeId } from '../../lib/utils';
@@ -243,11 +244,7 @@ export function ChatArea({
                                 </Avatar>
                                 <div className="flex flex-col gap-2 pt-1.5">
                                     {agentStatus && (
-                                        <div className="flex items-center gap-2 text-xs font-medium text-primary bg-primary/5 px-3 py-1.5 rounded-full border border-primary/10 w-fit">
-                                            <Sparkles className="w-3 h-3 animate-pulse" />
-                                            <span>{agentStatus}</span>
-                                            <Loader2 className="w-3 h-3 animate-spin ml-1" />
-                                        </div>
+                                        <StreamingBadge statusMessage={agentStatus} />
                                     )}
                                     <div className="flex items-center gap-1.5 bg-muted/30 px-4 py-3 rounded-2xl rounded-tl-sm w-fit">
                                         <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />

@@ -1,3 +1,4 @@
+from chats.schemas import CreateChatSchema
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException, status
@@ -9,6 +10,7 @@ from .models import Chats, QuestionsAnswers
 from src.auth.models import Users
 from src.chats.models import Chats
 from src.app_responses import AppError
+from .schemas import CreateChatSchema
 
 
 class ChatServices:
@@ -45,12 +47,14 @@ class ChatServices:
             return chat
         raise AppError(ChatNotFoundError[None]())
 
-    async def create_chat(self, user_uid: str, chat_data: Dict, session: AsyncSession) -> Chats:
-        chat_data["user_uid"] = user_uid
+    async def create_chat(self, user_uid: str, chat_data: CreateChatSchema, session: AsyncSession) -> Chats:
 
         # We should have to check for the uuid in the database if necessary
-
-        new_chat: Chats = Chats(**chat_data)
+        new_chat: Chats = Chats(
+            title=chat_data.title,
+            user_uid=user_uid,
+            youtube_video_url=chat_data.youtube_video_url,
+        )
         session.add(new_chat)
         await session.commit()
         return new_chat
@@ -73,6 +77,18 @@ class ChatServices:
         result = await session.execute(statement)
         questions_answers = result.scalars().all()
         return questions_answers
+    
+
+    async def  delete_all_qa_related_to_chat(self, chat_uid: str, session: AsyncSession):
+        statement = select(QuestionsAnswers).where(
+            QuestionsAnswers.chat_uid == chat_uid
+        )
+        result = await session.execute(statement)
+        questions_answers = result.scalars().all()
+        for qa in questions_answers:
+            await session.delete(qa)
+        await session.commit()
+        return True
         
 
     async def get_video_url_by_chatid(self, chat_uid: str, session: AsyncSession) -> str | None :

@@ -35,9 +35,8 @@ async def create_new_chat(
 ) -> SuccessResponse[ResponseChatSchema]:
 
     user_uid = decoded_token_data["sub"]
-    chat_data_dict = chat_data.model_dump()
     new_chat = await chat_service.create_chat(
-        user_uid=user_uid, chat_data=chat_data_dict, session=session
+        user_uid=user_uid, chat_data=chat_data, session=session
     )
     return SuccessResponse[ResponseChatSchema](
         message="Chat created successfully", status_code=201, data=new_chat
@@ -177,14 +176,31 @@ async def fetch_and_store_video(
         )
     )
     if transcript_exists:
-        raise AppError(TranscriptAlreadyExistError())
+        return SuccessResponse[None](
+            message="Video already loaded previously.", status_code=200, data=None
+        )
 
     data = {"user_id": user_id, "video_id": video_id}
 
     await request.app.state.components.load_and_store_video(**data)
 
     return SuccessResponse[None](
-        message="Transcript generated successfully", status_code=201, data=None
+        message="Video loaded successfully.", status_code=201, data=None
+    )
+
+
+@chats_router.delete('/qa/delete/{chat_id}')
+async def delete_qa(
+    chat_id: str,
+    session: AsyncSession = Depends(get_session),
+    decoded_token_data: Dict = Depends(AccessTokenBearer()),
+):
+    user_id = decoded_token_data["sub"]
+    result = await chat_service.delete_all_qa_related_to_chat(chat_id, session)
+    if not result:
+        raise AppError(QADoesNotExistError())
+    return SuccessResponse[None](
+        message="QA deleted successfully.", status_code=200, data=None
     )
 
 

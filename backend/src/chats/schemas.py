@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, Field, field_validator, ConfigDict, computed_field
 from src.utils import get_video_id
 from uuid import UUID
 from typing import Optional, Any, List, Literal
@@ -67,13 +67,13 @@ class ResponseChatSchema(BaseModel):
 class ResponseQASchema(BaseModel):
     query: str
     answer: str
-    chat_uid: str
+    chat_uid: UUID
 
     model_config = ConfigDict(from_attributes=True, extra="ignore") 
 
 
 class ResponseChatDataSchema(BaseModel):
-    selected_chat_id: str
+    selected_chat_id: UUID
     youtube_video_url: str
     is_transcript_generated: bool = False
     questions_answers: List[ResponseQASchema]

@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 import { AppSidebar } from '../components/layout/AppSidebar';
 import { ChatArea } from '../components/chat/ChatArea';
 import { Video, Menu } from 'lucide-react';
@@ -8,7 +7,8 @@ import { Button } from '../components/ui/button-shadcn';
 import { cn, extractYouTubeId } from '../lib/utils';
 import { useChats, useCreateAndProcessChat, useDeleteChat, useUpdateChat, useChatData } from '../hooks/api/useChat';
 import { useAgentStream } from '../hooks/useAgentStream';
-import { chatApi } from '../api/chats';
+import { useBackgroundStreams } from '../hooks/useBackgroundStreams';
+import { streamManager } from '../services/streamManager';
 import { DEFAULT_LLM } from '../constants/llms';
 import type { SupportedModel } from '../types/chats.api';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
@@ -24,7 +24,6 @@ import type { QA } from '../types';
 const Dashboard = () => {
     const { chatId } = useParams<{ chatId: string }>();
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
 
     // API Hooks for data fetching and mutations
     const { data: chatsData } = useChats();
@@ -45,68 +44,83 @@ const Dashboard = () => {
     const [streamingMessageId, setStreamingMessageId] = useState("");
     const [selectedModel, setSelectedModel] = useState<SupportedModel>(DEFAULT_LLM as SupportedModel);
 
-    // Agent Streaming Hook
+    // Background streams management
+    const { backgroundStreamCount } = useBackgroundStreams(chatId);
+
+    // Track the current chat ID for background stream callbacks
+    const currentChatIdRef = useRef(chatId);
+    useEffect(() => {
+        currentChatIdRef.current = chatId;
+    }, [chatId]);
+
+    // Agent Streaming Hook for current chat
     const {
         isStreaming,
         statusMessage,
         startStream,
-        cancelStream
     } = useAgentStream({
         chatId: chatId || '',
-        onStreamComplete: async (query, answer) => {
-            // 1. Update local UI state
-            setMessages(prev => {
-                const filtered = prev.filter(m => m.id !== streamingMessageId);
-                return [
-                    ...filtered,
-                    {
-                        id: streamingMessageId,
-                        role: 'assistant',
-                        content: answer,
-                        timestamp: new Date().toLocaleTimeString()
-                    }
-                ];
-            });
+        onStreamComplete: async (completedChatId, query, answer) => {
+            // Handle stream completion via StreamManager (always, for DB save/cache)
+            await streamManager.handleStreamComplete(
+                completedChatId,
+                query,
+                answer,
+                completedChatId === currentChatIdRef.current // isCurrentChat
+            );
 
-            // 2. Save Q&A to database
-            if (!chatId) return;
-
-            try {
-                await chatApi.createQA(chatId, {
-                    query,
-                    answer
-                });
-
-                // 3. Manually update the cache with the new Q&A
-                queryClient.setQueryData(['chat-data', chatId], (old: any) => {
-                    if (!old) return old;
-
-                    return {
-                        ...old,
-                        data: {
-                            ...old.data,
-                            questions_answers: [
-                                ...(old.data?.questions_answers || []),
-                                {
-                                    query,
-                                    answer,
-                                    created_at: new Date().toISOString()
-                                }
-                            ]
+            // ONLY update local UI state if it's the current chat
+            if (completedChatId === currentChatIdRef.current) {
+                setMessages(prev => {
+                    const filtered = prev.filter(m => m.id !== streamingMessageId);
+                    return [
+                        ...filtered,
+                        {
+                            id: streamingMessageId,
+                            role: 'assistant',
+                            content: answer,
+                            timestamp: new Date().toLocaleTimeString()
                         }
-                    };
+                    ];
                 });
-
-                console.log('Q&A saved successfully');
-            } catch (error) {
-                console.error('Failed to save Q&A:', error);
-                toast.error('Failed to save conversation. Please try again.');
             }
         },
-        onError: (error) => {
-            toast.error(`Agent Error: ${error.message}`);
+        onError: (failedChatId, error) => {
+            streamManager.handleStreamError(failedChatId, error);
+            if (failedChatId === currentChatIdRef.current) {
+                toast.error(`Agent Error: ${error.message}`);
+            }
         }
     });
+
+    // Register global stream completion handler for background streams
+    useEffect(() => {
+        const unsubscribe = streamManager.onStreamComplete((completedChatId) => {
+            // If the completed stream is not for the current chat, it was a background stream
+            if (completedChatId !== chatId) {
+                console.log(`Background stream completed for chat: ${completedChatId}`);
+                // The StreamManager already handled DB save and cache update
+                // Just log it here, notification is shown by StreamManager
+            }
+        });
+
+        return unsubscribe;
+    }, [chatId]);
+
+    // Listen for navigation events from notifications
+    useEffect(() => {
+        const handleNavigateToChat = (event: CustomEvent) => {
+            const targetChatId = event.detail?.chatId;
+            if (targetChatId) {
+                navigate(`/chat/${targetChatId}`);
+            }
+        };
+
+        window.addEventListener('navigate-to-chat' as any, handleNavigateToChat);
+        return () => {
+            window.removeEventListener('navigate-to-chat' as any, handleNavigateToChat);
+        };
+    }, [navigate]);
 
     // Use current API loading state
     const isLoading = isChatDataLoading;
@@ -134,13 +148,6 @@ const Dashboard = () => {
             setMessages([]);
         }
     }, [currentChatData, chatId]);
-
-    // Cleanup stream on unmount
-    useEffect(() => {
-        return () => {
-            cancelStream();
-        };
-    }, [cancelStream]);
 
     const handleCreateChat = async (url: string) => {
         try {
@@ -206,7 +213,7 @@ const Dashboard = () => {
         const assistantId = (Date.now() + 1).toString();
         setStreamingMessageId(assistantId);
 
-        const finalResponse = await startStream(text, videoId, selectedModel);
+        const finalResponse = await startStream(text, videoId, selectedModel, assistantId);
 
         if (!finalResponse) {
             // Stream was cancelled or errored - remove placeholder if needed
@@ -280,6 +287,19 @@ const Dashboard = () => {
                         selectedModel={selectedModel}
                         onModelChange={setSelectedModel}
                     />
+                    {backgroundStreamCount > 0 && (
+                        <div className="absolute top-20 right-4 z-20 animate-in fade-in slide-in-from-right-4">
+                            <div className="bg-primary/10 backdrop-blur-md border border-primary/20 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg">
+                                <div className="flex h-2 w-2 relative">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                                </div>
+                                <span className="text-xs font-bold text-primary uppercase tracking-wider">
+                                    {backgroundStreamCount} {backgroundStreamCount === 1 ? 'Chat' : 'Chats'} Processing
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </main>
         </div>
