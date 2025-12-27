@@ -15,7 +15,7 @@ interface AgentStreamResult {
     isStreaming: boolean;
     agentStatus: string;
     statusMessage: string;
-    startStream: (query: string, videoId: string, model: SupportedModel, streamingMessageId: string) => Promise<string | null>;
+    startStream: (query: string, videoId: string, model: SupportedModel) => Promise<string | null>;
     cancelStream: () => void;
 }
 
@@ -81,7 +81,6 @@ export const useAgentStream = ({
         query: string,
         videoId: string,
         model: SupportedModel,
-        streamingMessageId: string,
         retryCount: number = 0
     ): Promise<string | null> => {
         const MAX_RETRIES = 1;
@@ -118,7 +117,7 @@ export const useAgentStream = ({
 
                     if (refreshResponse.ok) {
                         console.log('Token refreshed successfully, retrying stream...');
-                        return await performStream(query, videoId, model, streamingMessageId, retryCount + 1);
+                        return await performStream(query, videoId, model, retryCount + 1);
                     } else {
                         throw new Error('Token refresh failed');
                     }
@@ -209,8 +208,7 @@ export const useAgentStream = ({
     const startStream = useCallback(async (
         query: string,
         videoId: string,
-        model: SupportedModel,
-        streamingMessageId: string
+        model: SupportedModel
     ): Promise<string | null> => {
         // Cancel any existing stream for this chat
         cancelStream();
@@ -221,7 +219,6 @@ export const useAgentStream = ({
 
         // Add stream to global store
         streamStore.addStream(chatId, {
-            streamingMessageId,
             agentStatus: 'initializing',
             statusMessage: AGENT_STEP_MESSAGES['initializing'] || 'Initializing...',
             query,
@@ -234,7 +231,7 @@ export const useAgentStream = ({
         }
 
         try {
-            const finalContent = await performStream(query, videoId, model, streamingMessageId, 0);
+            const finalContent = await performStream(query, videoId, model, 0);
 
             // Stream complete - pass chatId, query and answer to callback
             if (onStreamComplete && finalContent) {

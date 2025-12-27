@@ -13,8 +13,7 @@ import { DEFAULT_LLM } from '../constants/llms';
 import type { SupportedModel } from '../types/chats.api';
 import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 import { toast } from 'sonner';
-import type { MockMessage } from '../mock/data';
-import type { QA } from '../types';
+import type { ChatMessage, QA } from '../types';
 
 /**
  * Main Dashboard Component.
@@ -38,11 +37,10 @@ const Dashboard = () => {
     const createAndProcessChat = useCreateAndProcessChat();
 
     // UI States
-    const [messages, setMessages] = useState<MockMessage[]>([]);
+    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [loadingLabel, setLoadingLabel] = useState("");
-    const [streamingMessageId, setStreamingMessageId] = useState("");
     const [selectedModel, setSelectedModel] = useState<SupportedModel>(DEFAULT_LLM as SupportedModel);
 
     // Background streams management
@@ -63,28 +61,14 @@ const Dashboard = () => {
         chatId: chatId || '',
         onStreamComplete: async (completedChatId, query, answer) => {
             // Handle stream completion via StreamManager (always, for DB save/cache)
+            // We don't need to manually update messages here anymore because
+            // StreamManager will update the cache, which triggers the sync useEffect.
             await streamManager.handleStreamComplete(
                 completedChatId,
                 query,
                 answer,
                 completedChatId === currentChatIdRef.current // isCurrentChat
             );
-
-            // ONLY update local UI state if it's the current chat
-            if (completedChatId === currentChatIdRef.current) {
-                setMessages(prev => {
-                    const filtered = prev.filter(m => m.id !== streamingMessageId);
-                    return [
-                        ...filtered,
-                        {
-                            id: streamingMessageId,
-                            role: 'assistant',
-                            content: answer,
-                            timestamp: new Date().toLocaleTimeString()
-                        }
-                    ];
-                });
-            }
         },
         onError: (failedChatId, error) => {
             streamManager.handleStreamError(failedChatId, error);
@@ -129,7 +113,7 @@ const Dashboard = () => {
     // Sync messages from the API when chat data is loaded
     useEffect(() => {
         if (currentChatData?.data?.questions_answers) {
-            const apiMessages: MockMessage[] = [];
+            const apiMessages: ChatMessage[] = [];
             currentChatData.data.questions_answers.forEach((qa: QA, index: number) => {
                 apiMessages.push({
                     id: `q-${index}`,
@@ -212,7 +196,7 @@ const Dashboard = () => {
         }
 
         // 1. Add User Message Locally
-        const userMsg: MockMessage = {
+        const userMsg: ChatMessage = {
             id: Date.now().toString(),
             role: 'user',
             content: text,
@@ -221,10 +205,7 @@ const Dashboard = () => {
         setMessages(prev => [...prev, userMsg]);
 
         // 2. Start Agent Streaming
-        const assistantId = (Date.now() + 1).toString();
-        setStreamingMessageId(assistantId);
-
-        const finalResponse = await startStream(text, videoId, selectedModel, assistantId);
+        const finalResponse = await startStream(text, videoId, selectedModel);
 
         if (!finalResponse) {
             // Stream was cancelled or errored - remove placeholder if needed

@@ -6,7 +6,6 @@ import { Input } from '../ui/input-shadcn';
 import { ScrollArea } from '../ui/scroll-area';
 import { Send, Bot, User, Youtube, Copy, Check, Video, Loader2 } from 'lucide-react';
 import { StreamingBadge } from './StreamingBadge';
-import type { MockMessage } from '../../mock/data';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { cn, extractYouTubeId } from '../../lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
@@ -18,11 +17,12 @@ import {
 } from '../ui/dropdown-menu';
 import { SUPPORTED_LLMS } from '../../constants/llms';
 import type { SupportedModel } from '../../types/chats.api';
+import type { ChatMessage } from '../../types';
 import { ChevronDown, Cpu } from 'lucide-react';
 
 
 interface ChatAreaProps {
-    messages: MockMessage[];
+    messages: ChatMessage[];
     isLoading?: boolean;
     isStreaming?: boolean;
     agentStatus?: string; // Now expects the user-friendly message directly

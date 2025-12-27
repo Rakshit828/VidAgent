@@ -75,5 +75,4 @@ class ResponseQASchema(BaseModel):
 class ResponseChatDataSchema(BaseModel):
     selected_chat_id: UUID
     youtube_video_url: str
-    is_transcript_generated: bool = False
     questions_answers: List[ResponseQASchema]

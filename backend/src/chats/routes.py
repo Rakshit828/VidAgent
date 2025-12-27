@@ -137,18 +137,18 @@ async def get_all_current_chat_data(
 ) -> SuccessResponse[ResponseChatDataSchema]:
     youtube_video_url = await chat_service.get_video_url_by_chatid(chat_uid, session)
     user_id = decoded_token_data["sub"]
-    transcript_exists = (
-        await request.app.state.components.vector_db.check_for_transcript(
-            user_id, youtube_video_url
-        )
-    )
+    
+    # transcript_exists = (
+    #     await request.app.state.components.vector_db.check_for_transcript(
+    #         user_id, youtube_video_url
+    #     )
+    # )
 
     result = await chat_service.get_all_qa(chat_uid, session)
 
     current_chat = {
         "selected_chat_id": chat_uid,
         "youtube_video_url": youtube_video_url,
-        "is_transcript_generated": transcript_exists,
         "questions_answers": result,
     }
 

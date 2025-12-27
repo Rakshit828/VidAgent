@@ -5,7 +5,7 @@ import { create } from 'zustand';
  */
 export interface StreamState {
   chatId: string;
-  streamingMessageId: string;
+  streamingMessageId?: string;
   agentStatus: string;
   statusMessage: string;
   isActive: boolean;

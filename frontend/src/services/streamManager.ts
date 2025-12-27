@@ -72,14 +72,17 @@ class StreamManager {
     console.log(`[StreamManager] Stream completed for chat: ${chatId}, isCurrentChat: ${isCurrentChat}`);
 
     try {
-      // 1. Save Q&A to database
-      await chatApi.createQA(chatId, { query, answer });
-      console.log(`[StreamManager] Q&A saved to database for chat: ${chatId}`);
-
-      // 2. Update the query cache
+      // 1. Update the query cache OPTIMISTICALLY first
+      // This ensures the message appears in the UI immediately without waiting for the DB save
       if (this.queryClient) {
         this.queryClient.setQueryData(['chat-data', chatId], (old: any) => {
           if (!old) return old;
+
+          // Check if this QA already exists (unlikely but safe)
+          const exists = old.data?.questions_answers?.some(
+            (qa: any) => qa.query === query && qa.answer === answer
+          );
+          if (exists) return old;
 
           return {
             ...old,
@@ -96,8 +99,12 @@ class StreamManager {
             },
           };
         });
-        console.log(`[StreamManager] Cache updated for chat: ${chatId}`);
+        console.log(`[StreamManager] Cache updated optimistically for chat: ${chatId}`);
       }
+
+      // 2. Save Q&A to database in the background
+      await chatApi.createQA(chatId, { query, answer });
+      console.log(`[StreamManager] Q&A saved to database for chat: ${chatId}`);
 
       // 3. Remove from active streams
       useStreamStore.getState().removeStream(chatId);

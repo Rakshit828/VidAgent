@@ -35,8 +35,14 @@ export interface QA {
 export interface ChatData {
   selected_chat_id: string;
   youtube_video_url: string;
-  is_transcript_generated: boolean;
   questions_answers: QA[];
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
 }
 
 export interface ApiResponse<T = Chat | ChatData | QA | Chat[] | LoginData | User | Tokens> {

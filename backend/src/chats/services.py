@@ -15,12 +15,10 @@ from .schemas import CreateChatSchema
 
 class ChatServices:
     async def get_all_chats_by_uuid(self, user_uid: str, session: AsyncSession) -> list[Chats]:
-        statement = select(Chats).where(Chats.user_uid == user_uid)
+        statement = select(Chats).where(Chats.user_uid == user_uid).order_by(Chats.created_at.desc())
         result = await session.execute(statement)
         list_of_chats = result.scalars().all()
-        if list_of_chats:
-            return list_of_chats
-        return []
+        return list_of_chats or []
 
 
     async def get_chat_by_id(self, chat_uid: str, session: AsyncSession) -> Chats | None:
