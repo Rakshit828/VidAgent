@@ -1,24 +1,17 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Button } from '../ui/button-shadcn';
 import { Input } from '../ui/input-shadcn';
 import { ScrollArea } from '../ui/scroll-area';
-import { Send, Bot, User, Youtube, Copy, Check, Video, Loader2 } from 'lucide-react';
+import { Bot, User, Youtube, Copy, Check, Video } from 'lucide-react';
 import { StreamingBadge } from './StreamingBadge';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { cn, extractYouTubeId } from '../../lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger
-} from '../ui/dropdown-menu';
-import { SUPPORTED_LLMS } from '../../constants/llms';
 import type { SupportedModel } from '../../types/chats.api';
 import type { ChatMessage } from '../../types';
-import { ChevronDown, Cpu } from 'lucide-react';
+import { ChatInput } from './ChatInput';
 
 
 interface ChatAreaProps {
@@ -42,23 +35,9 @@ export function ChatArea({
     selectedModel,
     onModelChange
 }: ChatAreaProps) {
-    const [input, setInput] = React.useState('');
     const scrollRef = useRef<HTMLDivElement>(null);
     const [copiedId, setCopiedId] = React.useState<string | null>(null);
-
-    useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [messages, isLoading, isStreaming]);
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (input.trim() && !isLoading && !isStreaming) {
-            onSendMessage(input);
-            setInput('');
-        }
-    };
+    const [heroInput, setHeroInput] = React.useState('');
 
     const handleCopy = (content: string, id: string) => {
         navigator.clipboard.writeText(content);
@@ -69,7 +48,7 @@ export function ChatArea({
     return (
         <div className="flex flex-col h-full overflow-hidden bg-background">
             <ScrollArea className="flex-1 p-4">
-                <div className="max-w-3xl mx-auto space-y-6 pb-4 h-full flex flex-col">
+                <div className="max-w-3xl mx-auto space-y-6 pb-32 h-full flex flex-col">
                     {/* YouTube Video Player */}
                     {videoUrl && (
                         <div className="rounded-xl overflow-hidden border border-border shadow-xl mb-6 bg-black/5 shrink-0 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -138,9 +117,9 @@ export function ChatArea({
                                 <form
                                     onSubmit={(e) => {
                                         e.preventDefault();
-                                        if (input.includes('youtube.com') || input.includes('youtu.be')) {
-                                            onSendMessage(input);
-                                            setInput('');
+                                        if (heroInput.includes('youtube.com') || heroInput.includes('youtu.be')) {
+                                            onSendMessage(heroInput);
+                                            setHeroInput('');
                                         }
                                     }}
                                     className="relative flex items-center bg-card/80 backdrop-blur-xl rounded-[1.8rem] border border-white/10 shadow-2xl p-1.5 transition-all duration-300 group-focus-within:ring-2 ring-primary/20"
@@ -149,8 +128,8 @@ export function ChatArea({
                                         <Youtube className="w-6 h-6 shrink-0" />
                                     </div>
                                     <Input
-                                        value={input}
-                                        onChange={(e) => setInput(e.target.value)}
+                                        value={heroInput}
+                                        onChange={(e) => setHeroInput(e.target.value)}
                                         placeholder="Paste YouTube Video URL here..."
                                         className="h-8 md:h-12 border-0 shadow-none outline-0 focus:outline-0 focus-visible:outline-0 focus-visible:ring-0 bg-transparent text-lg placeholder:text-muted-foreground/50 transition-all pl-1 pr-24 md:pr-32"
                                     />
@@ -272,71 +251,15 @@ export function ChatArea({
                 </div>
             </ScrollArea>
 
-            {/* Input Footer */}
+            {/* Input Area */}
             {(videoUrl || messages.length > 0) && (
-                <div className="p-4 border-t border-border bg-background/50 backdrop-blur-sm">
-                    <div className="max-w-3xl mx-auto relative">
-                        <form onSubmit={handleSubmit} className="relative group">
-                            <div className="absolute -inset-0.5 bg-linear-to-r from-primary/20 to-purple-600/20 rounded-full blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
-                            <div className="relative">
-                                <Input
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    placeholder={isStreaming ? "Wait for AI response..." : "Ask something about the video..."}
-                                    className="pr-28 md:pr-36 py-6 rounded-full shadow-sm border-muted-foreground/20 focus-visible:ring-primary/20 bg-muted/10 backdrop-blur-sm"
-                                    disabled={isLoading || isStreaming}
-                                />
-                                <div className="absolute right-1.5 top-1.5 bottom-1.5 flex items-center gap-1.5">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-9 px-2 md:px-3 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/5 transition-all flex items-center gap-1.5"
-                                                disabled={isLoading || isStreaming}
-                                            >
-                                                <Cpu className="w-4 h-4" />
-                                                <span className="hidden md:inline text-xs font-bold uppercase tracking-tighter">
-                                                    {SUPPORTED_LLMS[selectedModel]?.split(' ')[0]}
-                                                </span>
-                                                <ChevronDown className="w-3 h-3 opacity-50" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-48 mb-2">
-                                            {Object.entries(SUPPORTED_LLMS).map(([id, name]) => (
-                                                <DropdownMenuItem
-                                                    key={id}
-                                                    onClick={() => onModelChange(id as SupportedModel)}
-                                                    className={cn(
-                                                        "text-xs font-medium cursor-pointer",
-                                                        selectedModel === id && "bg-primary/10 text-primary"
-                                                    )}
-                                                >
-                                                    {name}
-                                                </DropdownMenuItem>
-                                            ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-
-                                    <Button
-                                        size="icon"
-                                        type="submit"
-                                        className={cn(
-                                            "h-9 w-9 rounded-full transition-all duration-300",
-                                            isStreaming ? "bg-muted cursor-not-allowed" : "bg-primary"
-                                        )}
-                                        disabled={!input.trim() || isLoading || isStreaming}
-                                    >
-                                        {isStreaming ? <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" /> : <Send className="w-4 h-4" />}
-                                    </Button>
-                                </div>
-                            </div>
-                        </form>
-                        <p className="text-center text-[10px] text-muted-foreground mt-2 uppercase tracking-widest font-bold opacity-50">
-                            ChatTube AI Analyzer
-                        </p>
-                    </div>
-                </div>
+                <ChatInput
+                    onSendMessage={onSendMessage}
+                    isLoading={isLoading}
+                    isStreaming={isStreaming}
+                    selectedModel={selectedModel}
+                    onModelChange={onModelChange}
+                />
             )}
         </div>
     );
