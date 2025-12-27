@@ -1,4 +1,4 @@
-from chats.schemas import CreateChatSchema
+from src.chats.schemas import CreateChatSchema
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException, status

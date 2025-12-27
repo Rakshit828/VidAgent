@@ -96,3 +96,21 @@ export const useDeleteChat = () => {
   });
 };
 
+/**
+ * Hook to delete all QA for a chat.
+ */
+export const useDeleteChatQA = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => chatApi.deleteAllQA(id).then(res => res.data),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['chat-data', id] });
+      toast.success("Conversation cleared");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to clear conversation");
+    }
+  });
+};
+

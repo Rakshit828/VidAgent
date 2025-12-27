@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { MoreVertical, Pencil, Trash2, MessageSquare } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, MessageSquare, Eraser } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button-shadcn';
 import { Input } from '../ui/input-shadcn';
@@ -20,6 +20,7 @@ interface ChatListItemProps {
     onSelect: (uuid: string) => void;
     onRename: (uuid: string, newTitle: string) => void;
     onDelete: (uuid: string) => void;
+    onDeleteQA: (uuid: string) => void;
 }
 
 export function ChatListItem({
@@ -30,6 +31,7 @@ export function ChatListItem({
     onSelect,
     onRename,
     onDelete,
+    onDeleteQA,
 }: ChatListItemProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(chat.title);
@@ -139,6 +141,15 @@ export function ChatListItem({
                             >
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Rename
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteQA(chat.uuid);
+                                }}
+                            >
+                                <Eraser className="mr-2 h-4 w-4" />
+                                Clear Conversation
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"

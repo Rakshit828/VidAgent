@@ -32,4 +32,7 @@ export const chatApi = {
     // I'll stick to the docs but URI encode it.
     return client.get(`/chats/response/${videoId}/${encodeURIComponent(query)}`);
   },
+  deleteAllQA: async (chatUid: string) => {
+    return client.delete(`/chats/qa/delete/${chatUid}`);
+  },
 };

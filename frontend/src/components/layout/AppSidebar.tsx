@@ -28,6 +28,7 @@ interface AppSidebarProps {
     currentChatId?: string;
     onSelectChat: (uuid: string) => void;
     onDeleteChat: (uuid: string) => void;
+    onDeleteChatQA: (uuid: string) => void;
     onRenameChat: (uuid: string, newTitle: string) => void;
     className?: string;
     isCollapsed: boolean;
@@ -39,6 +40,7 @@ export function AppSidebar({
     currentChatId,
     onSelectChat,
     onDeleteChat,
+    onDeleteChatQA,
     onRenameChat,
     className,
     isCollapsed,
@@ -146,6 +148,7 @@ export function AppSidebar({
                                 onSelect={onSelectChat}
                                 onRename={onRenameChat}
                                 onDelete={onDeleteChat}
+                                onDeleteQA={onDeleteChatQA}
                             />
                         ))}
                         {chats.length === 0 && !isCollapsed && (

@@ -5,7 +5,7 @@ import { ChatArea } from '../components/chat/ChatArea';
 import { Video, Menu } from 'lucide-react';
 import { Button } from '../components/ui/button-shadcn';
 import { cn, extractYouTubeId } from '../lib/utils';
-import { useChats, useCreateAndProcessChat, useDeleteChat, useUpdateChat, useChatData } from '../hooks/api/useChat';
+import { useChats, useCreateAndProcessChat, useDeleteChat, useUpdateChat, useChatData, useDeleteChatQA } from '../hooks/api/useChat';
 import { useAgentStream } from '../hooks/useAgentStream';
 import { useBackgroundStreams } from '../hooks/useBackgroundStreams';
 import { streamManager } from '../services/streamManager';
@@ -33,6 +33,7 @@ const Dashboard = () => {
     const { data: currentChatData, isLoading: isChatDataLoading } = useChatData(chatId);
 
     const deleteChatMutation = useDeleteChat();
+    const deleteChatQAMutation = useDeleteChatQA();
     const updateChatMutation = useUpdateChat();
     const createAndProcessChat = useCreateAndProcessChat();
 
@@ -169,16 +170,26 @@ const Dashboard = () => {
     };
 
     const handleDeleteChat = async (id: string) => {
-        if (window.confirm("Are you sure you want to delete this analysis?")) {
+        try {
             await deleteChatMutation.mutateAsync(id);
             if (chatId === id) {
                 navigate('/');
             }
-        }
+        } catch (error) { }
     };
 
-    const handleRenameChat = async (id: string, newTitle: string) => {
-        await updateChatMutation.mutateAsync({ id, title: newTitle });
+    const handleDeleteChatQA = async (id: string) => {
+        try {
+            await deleteChatQAMutation.mutateAsync(id);
+            // If the chat whose QAs were deleted is the current chat, clear messages locally
+            if (chatId === id) {
+                setMessages([]);
+            }
+        } catch (error) { }
+    };
+
+    const handleRenameChat = async (id: string, title: string) => {
+        await updateChatMutation.mutateAsync({ id, title });
     };
 
     const handleSelectChat = (id: string) => {
@@ -234,8 +245,9 @@ const Dashboard = () => {
                 <AppSidebar
                     chats={chats}
                     currentChatId={chatId}
-                    onSelectChat={handleSelectChat}
+                    onSelectChat={(uuid) => navigate(`/chat/${uuid}`)}
                     onDeleteChat={handleDeleteChat}
+                    onDeleteChatQA={handleDeleteChatQA}
                     onRenameChat={handleRenameChat}
                     isCollapsed={isCollapsed}
                     onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
@@ -252,6 +264,7 @@ const Dashboard = () => {
                             currentChatId={chatId}
                             onSelectChat={handleSelectChat}
                             onDeleteChat={handleDeleteChat}
+                            onDeleteChatQA={handleDeleteChatQA}
                             onRenameChat={handleRenameChat}
                             isCollapsed={false}
                             onToggleCollapse={() => setIsSidebarOpen(false)}

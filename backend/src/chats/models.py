@@ -1,7 +1,7 @@
+from __future__ import annotations
 from sqlalchemy.orm.util import CascadeOptions
 from asyncpg.exceptions._base import FatalPostgresError
 from jedi.inference.arguments import TreeArguments
-from __future__ import annotations
 from typing import Optional, List, TYPE_CHECKING
 from uuid import UUID
 
