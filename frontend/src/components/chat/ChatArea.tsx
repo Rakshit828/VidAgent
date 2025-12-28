@@ -19,6 +19,7 @@ interface ChatAreaProps {
     isLoading?: boolean;
     isStreaming?: boolean;
     agentStatus?: string; // Now expects the user-friendly message directly
+    streamMessage?: string; // New: The partial content being streamed
     onSendMessage: (message: string) => void;
     videoUrl?: string; // For embedding
     selectedModel: SupportedModel;
@@ -30,6 +31,7 @@ export function ChatArea({
     isLoading,
     isStreaming,
     agentStatus,
+    streamMessage,
     onSendMessage,
     videoUrl,
     selectedModel,
@@ -44,6 +46,29 @@ export function ChatArea({
         setCopiedId(id);
         setTimeout(() => setCopiedId(null), 2000);
     };
+
+    // Performance-optimized scrolling using manual scrollTop for lag-free streaming
+    React.useLayoutEffect(() => {
+        if (!scrollRef.current) return;
+
+        const viewport = scrollRef.current.closest('[data-radix-scroll-area-viewport]') as HTMLElement;
+        if (!viewport) {
+            scrollRef.current.scrollIntoView({ behavior: isStreaming ? 'auto' : 'smooth', block: 'end' });
+            return;
+        }
+
+        const isNearBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 200;
+
+        if (isNearBottom || isStreaming) {
+            if (isStreaming) {
+                // Direct DOM manipulation for maximum performance during streaming
+                viewport.scrollTop = viewport.scrollHeight;
+            } else {
+                // Smooth scroll for non-streaming updates (initial load, end of stream)
+                scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            }
+        }
+    }, [messages.length, streamMessage, isStreaming]);
 
     return (
         <div className="flex flex-col h-full overflow-hidden bg-background">
@@ -218,18 +243,29 @@ export function ChatArea({
                     {isStreaming && (
                         <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
                             <div className="flex gap-4 w-full">
-                                <Avatar className="w-8 h-8 bg-primary/10 text-primary animate-pulse">
+                                <Avatar className="w-8 h-8 bg-primary/10 text-primary animate-pulse shrink-0">
                                     <AvatarFallback><Bot className="w-4 h-4" /></AvatarFallback>
                                 </Avatar>
-                                <div className="flex flex-col gap-2 pt-1.5">
+                                <div className="flex flex-col gap-2 pt-1.5 flex-1 max-w-[85%]">
                                     {agentStatus && (
                                         <StreamingBadge statusMessage={agentStatus} />
                                     )}
-                                    <div className="flex items-center gap-1.5 bg-muted/30 px-4 py-3 rounded-2xl rounded-tl-sm w-fit">
-                                        <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                                        <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                                        <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                                    </div>
+
+                                    {streamMessage ? (
+                                        <div className="bg-muted/80 border border-border rounded-2xl rounded-tl-sm px-5 py-3 text-base shadow-sm overflow-hidden">
+                                            <div className="prose prose-base dark:prose-invert max-w-none wrap-break-word leading-relaxed prose-p:text-foreground prose-headings:text-foreground prose-li:text-foreground prose-strong:text-foreground prose-code:text-foreground">
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                    {streamMessage}
+                                                </ReactMarkdown>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-1.5 bg-muted/30 px-4 py-3 rounded-2xl rounded-tl-sm w-fit">
+                                            <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                            <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                            <div className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

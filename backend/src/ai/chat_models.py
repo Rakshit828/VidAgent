@@ -31,3 +31,8 @@ class ChatModels:
             return json.loads(response.content)
         return response.content
 
+    async def astream_llm(self, prompt):
+        """Streams the LLM response."""
+        async for chunk in self.llm.astream(prompt):
+            yield chunk.content
+

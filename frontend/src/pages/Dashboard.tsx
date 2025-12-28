@@ -42,6 +42,7 @@ const Dashboard = () => {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [loadingLabel, setLoadingLabel] = useState("");
     const [selectedModel, setSelectedModel] = useState<SupportedModel>(DEFAULT_LLM as SupportedModel);
+    const [streamMessage, setStreamMessage] = useState<string>('');
 
     // Background streams management
     const { backgroundStreamCount } = useBackgroundStreams(chatId);
@@ -59,10 +60,18 @@ const Dashboard = () => {
         startStream,
     } = useAgentStream({
         chatId: chatId || '',
+        onStreamProgress: (cid, content) => {
+            if (cid === currentChatIdRef.current) {
+                setStreamMessage(content);
+            }
+        },
         onStreamComplete: async (completedChatId, query, answer) => {
+            // Clear current stream message as it's now finalized and will be in the messages list
+            if (completedChatId === currentChatIdRef.current) {
+                setStreamMessage('');
+            }
+
             // Handle stream completion via StreamManager (always, for DB save/cache)
-            // We don't need to manually update messages here anymore because
-            // StreamManager will update the cache, which triggers the sync useEffect.
             await streamManager.handleStreamComplete(
                 completedChatId,
                 query,
@@ -71,6 +80,9 @@ const Dashboard = () => {
             );
         },
         onError: (failedChatId, error) => {
+            if (failedChatId === currentChatIdRef.current) {
+                setStreamMessage('');
+            }
             streamManager.handleStreamError(failedChatId, error);
             if (failedChatId === currentChatIdRef.current) {
                 toast.error(`Agent Error: ${error.message}`);
@@ -276,6 +288,7 @@ const Dashboard = () => {
                         isLoading={isLoading}
                         isStreaming={isStreaming}
                         agentStatus={statusMessage}
+                        streamMessage={streamMessage}
                         onSendMessage={handleSendMessage}
                         videoUrl={chats.find(c => c.uuid === chatId)?.youtube_video_url}
                         selectedModel={selectedModel}

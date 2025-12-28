@@ -9,7 +9,7 @@ import { FullScreenLoader } from '../components/ui/FullScreenLoader';
 /**
  * Signup Page Component.
  * Collects user details and calls the useSignup mutation hook.
- */
+//  *
 const Signup = () => {
     const [formData, setFormData] = useState({
         first_name: '',

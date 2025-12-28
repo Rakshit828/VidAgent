@@ -3,9 +3,10 @@
  * Update this mapping as new agent steps are added to the backend.
  */
 export const AGENT_STEP_MESSAGES: Record<string, string> = {
-    'retrieve_conversation': 'Searching through past discussions...',
-    'retrieve_context': 'Fetching Content From Video',
-    'final_llm_response': 'Generating Answer...',
+    'llm_initial_decision_maker': 'Analyzing your request...',
+    'fetch_conversation_history': 'Checking past discussions...',
+    'fetch_relevant_context': 'Fetching relevant video content...',
+    'final_llm_response': 'Generating response...',
     '__end__': 'Complete',
 } as const;
 

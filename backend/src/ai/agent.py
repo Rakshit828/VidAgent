@@ -130,9 +130,13 @@ async def final_llm_response(state: AgentState, runtime: Runtime[AgentContext]):
         context=video_context,
         user_query=user_query,
     )
-    answer = await context.chat_model.call_llm(prompt)
-    # logger.info(f"[FINAL LLM RESPONSE] {answer}")
-    return {"response": answer, 'next_node': '__end__'}
+    
+    # We use astream here so that astream_events can pick up individual tokens
+    full_response = ""
+    async for chunk in context.chat_model.llm.astream(prompt):
+        full_response += chunk.content
+        
+    return {"response": full_response, 'next_node': '__end__'}
 
 
 graph = StateGraph(state_schema=AgentState, context_schema=AgentContext)
@@ -173,18 +177,31 @@ class Agent:
     async def run_agent(
         self, input_state: AgentState, context: AgentContext
     ):
-        async for mode, chunk in self.agent.astream(
-            input=input_state, context=context, stream_mode=['messages', 'updates']
+        # Use astream_events for token streaming. 
+        # Context is passed as a top-level argument if supported by the compiled graph's astream_events
+        async for event in self.agent.astream_events(
+            input=input_state, 
+            context=context,
+            version="v2"
         ):
-            if mode == 'updates':
-                next_node = f'{list(chunk.values())[0].get("next_node")}'.strip()
-                yield self.sse_event('agent_step', {
-                    "name": next_node
-                })
-            elif mode == 'messages':
-                if chunk[1].get('langgraph_node') == Nodes.FINAL_LLM_RESPONSE.value:
-                    token = f'{chunk[0].content}'
-                    yield self.sse_event("token", {
-                        "text": token
+            kind = event["event"]
+            
+            # Handle Agent Step updates (Node transitions)
+            if kind == "on_chain_start":
+                # Check if this is a node starting
+                node_name = event.get("metadata", {}).get("langgraph_node")
+                if node_name and (node_name in [node.value for node in Nodes]):
+                    yield self.sse_event('agent_step', {
+                        "name": node_name
                     })
+            
+            # Handle Token streaming from the final response node
+            elif kind == "on_chat_model_stream":
+                # Only stream tokens from the final LLM response node
+                if event["metadata"].get("langgraph_node") == Nodes.FINAL_LLM_RESPONSE.value:
+                    token = event["data"]["chunk"].content
+                    if token:
+                        yield self.sse_event("token", {
+                            "text": token
+                        })
                     
