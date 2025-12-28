@@ -1,7 +1,7 @@
 import client from './client';
 
 import type { SignupFormData, LoginFormData } from '../types/auth.api';
-import type { ApiResponse, User } from '../types';
+import type { ApiResponse, User, LoginData } from '../types';
 
 
 export const authApi = {
@@ -9,7 +9,7 @@ export const authApi = {
     return client.post<ApiResponse<User>>('/auth/signup', data);
   },
   login: async (data: LoginFormData) => {
-    return client.post<ApiResponse<LoginFormData>>('/auth/login', data);
+    return client.post<ApiResponse<LoginData>>('/auth/login', data);
   },
   logout: async () => {
     return client.get<ApiResponse<null>>('/auth/logout');

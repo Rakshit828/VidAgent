@@ -4,13 +4,17 @@ import { chatApi } from '../../api/chats';
 // Types are implicitly handled or can be added if needed
 import { toast } from 'sonner';
 
-/**
- * Hook to fetch all chats for the current user.
- */
+import { useAuthStore } from '../../store/useAuthStore';
+
+
 export const useChats = () => {
+  const { isNewUser, isAuthenticated } = useAuthStore();
+  
   return useQuery({
     queryKey: ['chats'],
     queryFn: () => chatApi.getAllChats().then(res => res.data),
+    // Only fetch if authenticated and not a brand new user
+    enabled: isAuthenticated && !isNewUser,
   });
 };
 
@@ -18,10 +22,13 @@ export const useChats = () => {
  * Hook to fetch data for a specific chat.
  */
 export const useChatData = (chatId?: string) => {
+  const { isAuthenticated } = useAuthStore();
+  
   return useQuery({
     queryKey: ['chat-data', chatId],
     queryFn: () => chatId ? chatApi.getChatData(chatId).then(res => res.data) : null,
-    enabled: !!chatId,
+    // Only fetch if authenticated and we have a chatId
+    enabled: isAuthenticated && !!chatId,
   });
 };
 
@@ -51,6 +58,10 @@ export const useCreateAndProcessChat = () => {
       return newChat;
     },
     onSuccess: () => {
+      // If the user was marked as new, they now have at least one chat
+      const { setIsNewUser } = useAuthStore.getState();
+      setIsNewUser(false);
+      
       queryClient.invalidateQueries({ queryKey: ['chats'] });
     },
     onError: (error: any) => {

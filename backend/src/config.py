@@ -5,6 +5,10 @@ class Config(BaseSettings):
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
 
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
+    GOOGLE_REDIRECT_URI: str
+
     FRONTEND_URL: str
     BACKEND_URL: str
     
@@ -15,10 +19,6 @@ class Config(BaseSettings):
 
     REFRESH_TOKEN_EXPIRY_DAYS: int
     ACCESS_TOKEN_EXPIRY_MINUTES: int
-
-    RESEND_API_KEY: str
-    MAIL_FROM_NAME: str
-    RESEND_FROM_EMAIL: str
 
     model_config = SettingsConfigDict(
         env_file='.env',

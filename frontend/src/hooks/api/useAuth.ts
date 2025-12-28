@@ -35,13 +35,14 @@ export const useLogin = () => {
   const setAuth = useAuthStore((state) => state.setAuth);
   
   return useMutation({
-    // Mutation function for login
-    mutationFn: (data: LoginFormData) => authApi.login(data).then(res => res.data),
+    // Mutation function for login (accepts optional isNewUser flag for auto-login cases)
+    mutationFn: (data: LoginFormData & { isNewUser?: boolean }) => 
+      authApi.login({ email: data.email, password: data.password }).then(res => res.data),
     
-    onSuccess: (response) => {
+    onSuccess: (response, variables) => {
       // Update our global session state in Zustand
       if (response.data && 'user' in response.data) {
-          setAuth(response.data.user as any);
+          setAuth(response.data.user as any, variables.isNewUser);
       }
       // Displaying the success message from the backend
       toast.success(response.message || 'Logged in successfully!');
@@ -85,25 +86,33 @@ export const useLogout = () => {
  * Useful for restoring sessions on page reload.
  */
 export const useUser = () => {
-    const { setAuth } = useAuthStore();
+    const { setAuth, isInitialized } = useAuthStore();
 
     return useQuery({
         // Unique key for caching the user profile
         queryKey: ['user-profile'],
 
         // Function that fetches the profile
-        queryFn: () => authApi.getMyProfile().then(res => {
-            // v5 way to sync state on success
-            if (res.data?.data) {
-                setAuth(res.data.data as any);
-            }
-            return res.data;
-        }),
+        queryFn: () => authApi.getMyProfile()
+            .then(res => {
+                // sync state on success
+                if (res.data?.data) {
+                    setAuth(res.data.data as any);
+                } else {
+                    setAuth(null);
+                }
+                return res.data;
+            })
+            .catch(error => {
+                // On error (like 401), we mark as initialized with no user
+                setAuth(null);
+                throw error;
+            }),
 
         // 1. Critical: Stop retrying if we get a 401/error (e.g. on login page)
         retry: false,
         
-        // 2. Only fetch if we are likely to have a session (optional optimization)
-        // enabled: !!localStorage.getItem('chattube-auth-storage'), 
+        // 2. Only fetch if we haven't successfully initialized the session yet
+        enabled: !isInitialized, 
     });
 };

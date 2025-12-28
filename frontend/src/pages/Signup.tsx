@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useSignup } from '../hooks/api/useAuth';
+import { useSignup, useLogin } from '../hooks/api/useAuth';
 import { Button } from '../components/ui/button-shadcn';
 import { Input } from '../components/ui/input-shadcn';
 import { Video, Mail, Lock, ArrowRight } from 'lucide-react';
@@ -17,10 +17,12 @@ const Signup = () => {
         email: '',
         password: ''
     });
+    const [isAutoLoggingIn, setIsAutoLoggingIn] = useState(false);
     const navigate = useNavigate();
 
-    // TanStack Query Mutation Hook for registration.
+    // TanStack Query Mutation Hooks for registration and login.
     const signupMutation = useSignup();
+    const loginMutation = useLogin();
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -29,19 +31,33 @@ const Signup = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // Executing the signup mutation
+            // 1. Executing the signup mutation
             await signupMutation.mutateAsync(formData);
-            // On success, we navigate to login (or dashboard if backend auto-logs in)
-            // For now, let's go to login as is common after signup
-            navigate('/login');
+
+            // 2. Start auto-login process
+            setIsAutoLoggingIn(true);
+
+            // 3. Executing the login mutation automatically
+            await loginMutation.mutateAsync({
+                email: formData.email,
+                password: formData.password,
+                isNewUser: true
+            });
+
+            // 4. On success, navigate to dashboard
+            navigate('/');
         } catch (error) {
             // Errors are logged in the hook
+            setIsAutoLoggingIn(false);
         }
     };
 
     return (
         <>
-            <FullScreenLoader isVisible={signupMutation.isPending} label="Creating your account..." />
+            <FullScreenLoader
+                isVisible={signupMutation.isPending || isAutoLoggingIn || loginMutation.isPending}
+                label={signupMutation.isPending ? "Creating your account..." : "Signing you in..."}
+            />
             <div className="min-h-screen w-full flex items-center justify-center bg-background relative overflow-hidden p-4">
                 {/* Background Decorative Elements */}
                 <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px]" />

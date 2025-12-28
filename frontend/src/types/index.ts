@@ -38,16 +38,17 @@ export interface ChatData {
   questions_answers: QA[];
 }
 
-export interface ChatMessage {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: string;
-}
-
 export interface ApiResponse<T = Chat | ChatData | QA | Chat[] | LoginData | User | Tokens> {
   status: string;
   message: string;
   status_code: number;
   data: T;
+}
+
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
 }
