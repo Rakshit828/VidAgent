@@ -47,33 +47,32 @@ export function ChatArea({
         setTimeout(() => setCopiedId(null), 2000);
     };
 
-    // Performance-optimized scrolling using manual scrollTop for lag-free streaming
+    // Auto-scroll behavior: scroll to bottom on new messages or during streaming
     React.useLayoutEffect(() => {
         if (!scrollRef.current) return;
 
         const viewport = scrollRef.current.closest('[data-radix-scroll-area-viewport]') as HTMLElement;
         if (!viewport) {
-            scrollRef.current.scrollIntoView({ behavior: isStreaming ? 'auto' : 'smooth', block: 'end' });
+            scrollRef.current.scrollIntoView({ behavior: 'auto', block: 'end' });
             return;
         }
 
         const isNearBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 200;
 
-        if (isNearBottom || isStreaming) {
-            if (isStreaming) {
-                // Direct DOM manipulation for maximum performance during streaming
-                viewport.scrollTop = viewport.scrollHeight;
-            } else {
-                // Smooth scroll for non-streaming updates (initial load, end of stream)
-                scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            }
+        // Always scroll during streaming for smooth token display
+        if (isStreaming) {
+            viewport.scrollTop = viewport.scrollHeight;
+        }
+        // Scroll on new messages if user is near bottom
+        else if (isNearBottom) {
+            viewport.scrollTop = viewport.scrollHeight;
         }
     }, [messages.length, streamMessage, isStreaming]);
 
     return (
         <div className="flex flex-col h-full overflow-hidden bg-background">
             <ScrollArea className="flex-1 p-4">
-                <div className="max-w-3xl mx-auto space-y-6 pb-40 h-full flex flex-col">
+                <div className="max-w-3xl mx-auto space-y-6 pb-40 h-full flex flex-col" style={{ willChange: 'scroll-position' }}>
                     {/* YouTube Video Player */}
                     {videoUrl && (
                         <div className="rounded-xl overflow-hidden border border-border shadow-xl mb-6 bg-black/5 shrink-0 animate-in fade-in slide-in-from-top-4 duration-500">
@@ -239,7 +238,7 @@ export function ChatArea({
                         </div>
                     ))}
 
-                    {/* Agent Streaming Indicator */}
+                    {/* Agent Streaming Indicator - only show during active streaming */}
                     {isStreaming && (
                         <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
                             <div className="flex gap-4 w-full">

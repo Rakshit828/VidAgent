@@ -30,6 +30,7 @@ export interface Chat {
 export interface QA {
   query: string;
   answer: string;
+  created_at?: string;
 }
 
 export interface ChatData {

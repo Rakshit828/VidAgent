@@ -7,6 +7,18 @@ import { toast } from 'sonner';
 import { useAuthStore } from '../../store/useAuthStore';
 
 
+/**
+ * useChat Hooks - TanStack Query Data Layer
+ * 
+ * ARCHITECTURE:
+ * These hooks encapsulate all CRUD operations for chats. They use TanStack Query 
+ * to manage the server state lifecycle:
+ * 1. QUERIES: Fetch and cache chat lists ('chats') and message history ('chat-data').
+ * 2. MUTATIONS: Handle side-effects (create, rename, delete) and trigger 
+ *    targeted cache invalidations to force UI refreshes.
+ * 3. AUTH SYNC: Hooks are 'enabled' only when the user is authenticated.
+ */
+
 export const useChats = () => {
   const { isNewUser, isAuthenticated } = useAuthStore();
   
@@ -79,8 +91,18 @@ export const useUpdateChat = () => {
   return useMutation({
     mutationFn: ({ id, title }: { id: string, title: string }) => 
       chatApi.updateChat(id, { title }).then(res => res.data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chats'] });
+    onSuccess: (_, variables) => {
+      // Update the chat list locally without refetching
+      queryClient.setQueryData(['chats'], (old: any) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: old.data.map((chat: any) => 
+            chat.uuid === variables.id ? { ...chat, title: variables.title } : chat
+          )
+        };
+      });
+      
       toast.success("Chat renamed successfully");
     },
     onError: (error: any) => {
@@ -97,8 +119,16 @@ export const useDeleteChat = () => {
 
   return useMutation({
     mutationFn: (id: string) => chatApi.deleteChat(id).then(res => res.data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chats'] });
+    onSuccess: (_, deletedId) => {
+      // Update the chat list cache locally without triggering a refetch
+      queryClient.setQueryData(['chats'], (old: any) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: old.data.filter((chat: any) => chat.uuid !== deletedId)
+        };
+      });
+      
       toast.success("Chat deleted");
     },
     onError: (error: any) => {
@@ -116,7 +146,18 @@ export const useDeleteChatQA = () => {
   return useMutation({
     mutationFn: (id: string) => chatApi.deleteAllQA(id).then(res => res.data),
     onSuccess: (_, id) => {
-      queryClient.invalidateQueries({ queryKey: ['chat-data', id] });
+      // Clear the session messages locally
+      queryClient.setQueryData(['chat-data', id], (old: any) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            questions_answers: []
+          }
+        };
+      });
+      
       toast.success("Conversation cleared");
     },
     onError: (error: any) => {

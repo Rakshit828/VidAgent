@@ -11,7 +11,7 @@ class ChatModels:
     ]
 
     def __init__(self, model_name: str = AVAILABLE_MODELS[0]):
-        self.llm = ChatGroq(model=model_name, temperature=0)
+        self.llm = ChatGroq(model=model_name, temperature=0.1)
 
     async def use_model(
         self, model_name: str = AVAILABLE_MODELS[0], temperature: float = 0
