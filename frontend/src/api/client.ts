@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { toast } from 'sonner';
+import { useAuthStore } from '../store/useAuthStore';
 
 // Track if a refresh is currently in progress to avoid multiple calls
 let isRefreshing = false;
@@ -82,8 +84,16 @@ client.interceptors.response.use(
         // Step 4: Refresh failed (e.g., refresh token expired)
         processQueue(refreshError);
         
-        // Optional: you could force a redirect here if needed
-        // window.location.href = '/login';
+        // Handle unauthorized error for refresh token specifically
+        const refreshStatusCode = refreshError.response?.status || refreshError.status_code;
+        if (refreshStatusCode === 401) {
+            const authState = useAuthStore.getState();
+            // Only show toast and logout if we were previously thought to be authenticated
+            if (authState.isAuthenticated) {
+                authState.logout();
+                toast.error("Session expired. Please login again.");
+            }
+        }
         
         return Promise.reject(refreshError);
       } finally {

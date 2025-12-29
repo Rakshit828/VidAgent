@@ -15,6 +15,7 @@ load_dotenv()
 PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_HOST = os.getenv("PINECONE_HOST")
 
+
 class VideoRecords(TypedDict):
     user_id: str
     records: List[TranscriptChunk]
@@ -49,7 +50,9 @@ class PineconeClient:
         try:
             from itertools import islice
 
-            def chunks(iterable: list[Dict], size=96) -> Generator[list[Dict], None, None]:
+            def chunks(
+                iterable: list[Dict], size=96
+            ) -> Generator[list[Dict], None, None]:
                 """This function helps to divide the list into given size or less"""
                 iterator = iter(iterable)
                 for first in iterator:
@@ -60,14 +63,13 @@ class PineconeClient:
                 await self.index.upsert_records(namespace=namespace, records=batch)
 
         except Exception as e:
-                logger.exception(f"Error during upsert : {e}")
-                raise VectorDatabaseError(
-                    status_code=409,
-                    message="Error during upsert, may be rate limit issue",
-                )
-    
-        return True
+            logger.exception(f"Error during upsert : {e}")
+            raise VectorDatabaseError(
+                status_code=409,
+                message="Error during upsert, may be rate limit issue",
+            )
 
+        return True
 
     async def retrieve_context(
         self, query: str, user_id: str, video_id: str, k: int = 4
@@ -100,6 +102,39 @@ class PineconeClient:
 
         results = filtered_results["result"]["hits"]
         return results
+
+    async def retrieve_context_with_time_filter(
+        self,
+        query: str,
+        user_id: str,
+        video_id: str,
+        start_time: int,
+        end_time: int,
+        k: int = 4,
+    ) -> List[Dict]:
+        try:
+            filtered_results = await self.index.search(
+                namespace=user_id,
+                query={
+                    "inputs": {"text": query},
+                    "top_k": k,
+                    "filter": {
+                        "$and": [
+                            {"video_id": {"$eq": video_id}},
+                            {"start_time": {"$gte": start_time}},
+                            {"end_time": {"$lte": end_time}},
+                        ]
+                    },
+                },
+                fields=["text", "start_time", "end_time"],
+            )
+        except PineconeApiException as e:
+            print(e)
+            raise VectorDatabaseError()
+
+        results = filtered_results["result"]["hits"]
+        return results
+
 
     async def delete_video_transcript(self, user_id, video_url_or_id):
         video_id = get_video_id(video_url_or_id)

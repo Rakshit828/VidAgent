@@ -1,6 +1,7 @@
 from fastapi.security import APIKeyCookie
 from fastapi import Depends, HTTPException, status, Request, Response
 from sqlalchemy.ext.asyncio.session import AsyncSession
+from typing import Literal
 
 from src.config import CONFIG
 from src.db.postgres_db import get_session
@@ -27,6 +28,13 @@ class TokensInjector:
     ):
         self.prod_config = prod_config
         self.dev_config = dev_config
+    
+    def set_cookies_age(self, cookie_key: Literal['access_token', 'refresh_token']):
+        if cookie_key == 'access_token':
+            return int(CONFIG.ACCESS_TOKEN_EXPIRY_MINUTES * 60)
+        elif cookie_key == 'refresh_token':
+            return int(CONFIG.REFRESH_TOKEN_EXPIRY_DAYS * 24 * 60 * 60)
+       
 
     async def set_tokens_as_cookies(
         self,
@@ -40,11 +48,13 @@ class TokensInjector:
                     response.set_cookie(
                         key=key,
                         value=value,
+                        max_age=self.set_cookies_age(cookie_key=key),
                         **self.dev_config.model_dump(),
                     )
             else:
                 response.set_cookie(
                     key="access_token",
+                    max_age=self.set_cookies_age(cookie_key='access_token'),
                     value=tokens.access_token,
                     **self.dev_config.model_dump(),
                 )
@@ -54,12 +64,14 @@ class TokensInjector:
                     response.set_cookie(
                         key=key,
                         value=value,
+                        max_age=self.set_cookies_age(cookie_key=key),
                         **self.prod_config.model_dump(),
                     )
             else:
                 # Only sets up the access token
                 response.set_cookie(
                     key="access_token",
+                    max_age=self.set_cookies_age(cookie_key='access_token'),
                     value=tokens.access_token,
                     **self.dev_config.model_dump(),
                 )

@@ -38,8 +38,8 @@ class TranscriptPreprocessor:
             if item.offset >= current_chunk_start + interval_seconds:
                 if current_text_parts:
                     chunks.append(TranscriptChunk(
-                        start_time=current_chunk_start,
-                        end_time=item.offset,
+                        start_time=int(current_chunk_start / 60),
+                        end_time=int(item.offset / 60),
                         text=" ".join(current_text_parts),
                         video_id=video_id
                     ))
@@ -53,8 +53,8 @@ class TranscriptPreprocessor:
         if current_text_parts:
             last_item = transcript[-1]
             chunks.append(TranscriptChunk(
-                start_time=current_chunk_start,
-                end_time=last_item.offset + last_item.duration,
+                start_time=int(current_chunk_start / 60),
+                end_time=int((last_item.offset + last_item.duration) / 60),
                 text=" ".join(current_text_parts),
                 video_id=video_id
             ))

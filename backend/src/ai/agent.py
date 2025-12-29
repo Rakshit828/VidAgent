@@ -21,7 +21,6 @@ load_dotenv()
 class Nodes(Enum):
     LLM_INITIAL_DECISION_MAKER = "llm_initial_decision_maker"
     FETCH_RELEVANT_CONTEXT = "fetch_relevant_context"
-    VERIFY_CONVERSATION_HISTORY = "verify_conversation_history"
     FETCH_CONVERSATION_HISTORY = "fetch_conversation_history"
     FINAL_LLM_RESPONSE = "final_llm_response"
 
@@ -98,7 +97,7 @@ async def fetch_conversation_history(
 ) -> dict:
     context = runtime.context
     conversation_history = []
-    return {"conversation_history": conversation_history, 'next_node': 'retrieve_context'}
+    
     # Since this contains the memory part, this will be done later
 
 
@@ -191,6 +190,7 @@ class Agent:
                 # Check if this is a node starting
                 node_name = event.get("metadata", {}).get("langgraph_node")
                 if node_name and (node_name in [node.value for node in Nodes]):
+                    logger.info(f"[AGENT STEP] {node_name}")
                     yield self.sse_event('agent_step', {
                         "name": node_name
                     })

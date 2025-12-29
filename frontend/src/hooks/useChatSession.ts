@@ -4,7 +4,7 @@ import { chatApi } from '../api/chats';
 import { AGENT_STEP_MESSAGES, DEFAULT_AGENT_MESSAGE } from '../constants/agentSteps';
 import { useStreamStore } from '../store/useStreamStore';
 import { streamManager } from '../services/streamManager';
-import type { ChatMessage, QA } from '../types';
+import type { ChatMessage } from '../types';
 import type { SupportedModel, AgentQueryData } from '../types/chats.api';
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';

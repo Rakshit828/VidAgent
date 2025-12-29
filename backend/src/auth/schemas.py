@@ -18,6 +18,7 @@ class TokenCookieProductionConfig(BaseModel):
     samesite: Literal['lax', 'strict', 'none'] = 'none'
 
 
+
 class TokensSchema(BaseModel):
     access_token: str
     refresh_token: str
