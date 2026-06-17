@@ -9,7 +9,7 @@ from sqlalchemy import ForeignKey, text, func, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import sqlalchemy.dialects.postgresql as pg
 
-from src.db.postgres_db import Base
+from src.db.postgres.setup import Base
 
 if TYPE_CHECKING:
     from src.auth.models import Users

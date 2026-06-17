@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio.session import AsyncSession
 from typing import Literal
 
 from src.config import CONFIG
-from src.db.postgres_db import get_session
+from src.db.postgres.setup import get_session
 from src.auth.models import Users
 from src.app_responses import AppError
 from .utils import decode_jwt_tokens

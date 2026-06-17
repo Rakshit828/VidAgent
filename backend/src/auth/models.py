@@ -6,7 +6,7 @@ from sqlalchemy import String, Boolean, text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import sqlalchemy.dialects.postgresql as pg
 
-from src.db.postgres_db import Base
+from src.db.postgres.setup import Base
 from src.chats.models import Chats
 
 class Users(Base):

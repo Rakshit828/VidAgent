@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, status, HTTPException, BackgroundTasks
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from pydantic import EmailStr
-from src.db.postgres_db import get_session
+from src.db.postgres.setup import get_session
 from src.config import CONFIG
 from .schemas import (
     UserCreateSchema,

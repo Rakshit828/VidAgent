@@ -12,7 +12,7 @@ from .schemas import (
     AgentQueryData,
 )
 from .services import chat_service
-from src.db.postgres_db import get_session
+from src.db.postgres.setup import get_session
 from src.auth.dependencies import AccessTokenBearer
 from typing import Dict, List
 from src.ai.exceptions import TranscriptDoesNotExistError, TranscriptAlreadyExistError

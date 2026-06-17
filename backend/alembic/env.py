@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from src.db.postgres_db import Base
+from src.db.postgres.setup import Base
 from src.auth.models import Users
 from src.chats.models import Chats, QuestionsAnswers
 from src.config import CONFIG
