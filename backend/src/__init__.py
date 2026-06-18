@@ -8,8 +8,6 @@ from src.app_responses import AppError
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from src.config import CONFIG
-from src.ai.components import Components
-from src.ai.agent import Agent
 
 load_dotenv()
 
@@ -17,10 +15,6 @@ VERSION = 'v1'
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    components: Components = await Components.init()
-
-    app.state.agent = Agent()
-    app.state.components = components
     yield
 
 
@@ -47,8 +41,8 @@ app.add_middleware(
 )
 
 
-from src.chats.routes import chats_router
-from src.auth.routes import auth_routes
+from src.domains.chats.routes import chats_router
+from src.domains.auth.routes import auth_routes
 
 
 
