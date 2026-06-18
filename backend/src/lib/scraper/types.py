@@ -14,12 +14,12 @@ class TranscriptSnippet(BaseModel):
 class TranscriptChapter(BaseModel):
     chapter: str
     start_ms: int
-    end_ms: int
+    end_ms: int | None = None
 
 
 class AvailableTranscript(BaseModel):
     language_code: str
-    type: str
+    type: str | None = None
     language_name: str | None = None
     selected: bool | None = None
     title: str | None = None
