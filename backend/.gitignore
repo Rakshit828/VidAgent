@@ -1,9 +1,9 @@
 .env
-src/__pycache__
-src/ai/__pycache__
 .venv
-src/auth/__pycache__
-src/chats/__pycache__
 chroma_db
 alembic.ini
 uv.lock
+
+# Python Caches
+**/__pycache__/
+*.pyc
