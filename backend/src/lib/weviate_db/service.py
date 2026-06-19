@@ -1,6 +1,7 @@
 from .client import WeaviateClient
 from .types import YoutubeInfoCollectionObject, WeaviateQueryOptions, SearchTypeEnum
 import weaviate.exceptions as exc
+from weaviate.classes.query import FilterReturn
 from typing import List
 from loguru import logger
 
@@ -48,3 +49,15 @@ class WeaviateService:
             )
     
         return response.objects
+    
+
+    async def delete_records(self, filters: FilterReturn):
+        yt_info_collection = self._wv_client.collection()
+        try:
+            await yt_info_collection.data.delete_many(
+                where=filters
+            )
+        except Exception as e:
+            raise e
+        
+        return

@@ -21,58 +21,59 @@ async def main() -> None:
     wv_client: WeaviateClient | None = None
 
     try:
-        import time
+        # import time
 
-        print(f"Fetching video {TEST_VIDEO_ID}...")
+        # print(f"Fetching video {TEST_VIDEO_ID}...")
 
-        transcript = await client.get_transcript(
-            TEST_VIDEO_ID,
-            language_code="en",
-        )
+        # transcript = await client.get_transcript(
+        #     TEST_VIDEO_ID,
+        #     language_code="en",
+        # )
 
-        s1 = TimeBasedChunking(
-            window_seconds=120, overlap_seconds=15, min_chunk_seconds=0
-        )
+        # s1 = TimeBasedChunking(
+        #     window_seconds=120, overlap_seconds=15, min_chunk_seconds=0
+        # )
 
-        start = time.time()
-        chunks1 = await s1.chunk(transcript_data=transcript)
-        ended = time.time() - start
-        logger.info(f"Chunking Ended in : {ended} seconds.")
+        # start = time.time()
+        # chunks1 = await s1.chunk(transcript_data=transcript)
+        # ended = time.time() - start
+        # logger.info(f"Chunking Ended in : {ended} seconds.")
 
-        for chunk in chunks1:
-            logger.debug(
-                {
-                    "index": chunk.chunk_index,
-                    "start": chunk.start_time_text,
-                    "end": chunk.end_time_text,
-                    "chapter": chunk.chapter,
-                }
-            )
+        # for chunk in chunks1:
+        #     logger.debug(
+        #         {
+        #             "index": chunk.chunk_index,
+        #             "start": chunk.start_time_text,
+        #             "end": chunk.end_time_text,
+        #             "chapter": chunk.chapter,
+        #         }
+        #     )
         wv_client = await WeaviateClient.create()
         service = WeaviateService(wv_client)
-        docs = [
-            YoutubeInfoCollectionObject(
-                chunk=chunk.text,
-                chunk_start_sec=chunk.start_ms // 1000,
-                chunk_end_sec=chunk.end_ms // 1000,
-                video_id=TEST_VIDEO_ID,
-            )
-            for chunk in chunks1
-        ]
-        result = await service.insert_into_db(docs)
-        logger.info(f"\n\n[Insert Result]: {result}")
+        # docs = [
+        #     YoutubeInfoCollectionObject(
+        #         chunk=chunk.text,
+        #         chunk_start_sec=chunk.start_ms // 1000,
+        #         chunk_end_sec=chunk.end_ms // 1000,
+        #         video_id=TEST_VIDEO_ID,
+        #     )
+        #     for chunk in chunks1
+        # ]
+        # result = await service.insert_into_db(docs)
+        # logger.info(f"\n\n[Insert Result]: {result}")
 
-        result = await service.retrieve(
-            WeaviateQueryOptions(
-                search=WeaviateQuerySearch(
-                    field="chunk",
-                    search=SearchTypeEnum.HYBRID,
-                    value="What is the video about?",
-                ),
-                filters=Filter.by_property("video_id").equal(TEST_VIDEO_ID),
-            )
-        )
-        logger.info(f"\n\n[Retrieve Result]: {result}")
+        # result = await service.retrieve(
+        #     WeaviateQueryOptions(
+        #         search=WeaviateQuerySearch(
+        #             field="chunk",
+        #             search=SearchTypeEnum.HYBRID,
+        #             value="What is the video about?",
+        #         ),
+        #         filters=Filter.by_property("video_id").equal(TEST_VIDEO_ID),
+        #     )
+        # )
+        # logger.info(f"\n\n[Retrieve Result]: {result}")
+        await service.delete_records(Filter.by_property("video_id").equal(TEST_VIDEO_ID))
 
     except SerpApiError as exc:
         print(f"SerpApi error: {exc}, [ERROR]: {exc.__class__}")
