@@ -14,6 +14,11 @@ class Config(BaseSettings):
     FRONTEND_URL: str
     BACKEND_URL: str 
 
+    WEAVIATE_API_KEY: str 
+    WEAVIATE_URL: str 
+    WEAVIATE_COLLECTION_NAME: str 
+    AUTOSCHEMA_ENABLED: str 
+
     IS_DEV: bool
 
     GROQ_API_KEY: str
