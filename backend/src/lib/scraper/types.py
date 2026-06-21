@@ -1,7 +1,6 @@
 from __future__ import annotations
-
-from pydantic import BaseModel
 from typing import List
+from pydantic import BaseModel
 
 
 class TranscriptSnippet(BaseModel):
@@ -14,21 +13,21 @@ class TranscriptSnippet(BaseModel):
 class TranscriptChapter(BaseModel):
     chapter: str
     start_ms: int
-    end_ms: int | None = None
+    end_ms: int | None= None
 
 
 class AvailableTranscript(BaseModel):
     language_code: str
-    type: str | None = None
-    language_name: str | None = None
-    selected: bool | None = None
-    title: str | None = None
-    serpapi_link: str | None = None
+    type: str | None= None
+    language_name: str | None= None
+    selected: bool | None= None
+    title: str | None= None
+    serpapi_link: str | None= None
 
 
 class YouTubeTranscriptResponse(BaseModel):
     transcript: List[TranscriptSnippet]
-    chapters: List[TranscriptChapter] | None = None
+    chapters: List[TranscriptChapter] | None = None 
     available_transcripts: List[AvailableTranscript] | None = None
 
 
@@ -50,9 +49,6 @@ class VideoDescription(BaseModel):
 
 
 class YouTubeVideoResponse(BaseModel):
-    model_config = {
-        "extra": "allow",
-    }
     title: str
     description: VideoDescription
     chapters: List[ChapterElement] | None = None

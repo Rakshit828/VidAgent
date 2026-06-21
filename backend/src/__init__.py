@@ -8,10 +8,14 @@ from src.app_responses import AppError
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from src.config import CONFIG
+import inngest.fast_api
+from src.services.inngest_client import inngest_client
+from src.jobs.video_workflows import process_video_workflow
 
 load_dotenv()
 
-VERSION = 'v1'
+VERSION = "v1"
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,29 +25,26 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="ChatTube",
     version=VERSION,
-    lifespan=lifespan
+    lifespan=lifespan,
     # The lifespan event expects a context manager
 )
 
 
 # Define allowed origins
-origins = [
-    CONFIG.FRONTEND_URL
-]
+origins = [CONFIG.FRONTEND_URL]
 
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_credentials=True,     # allows cookies, authorization headers, etc.
-    allow_methods=["*"],        # allows all HTTP methods (GET, POST, etc.)
-    allow_headers=["*"],        # allows all headers
+    allow_credentials=True,  # allows cookies, authorization headers, etc.
+    allow_methods=["*"],  # allows all HTTP methods (GET, POST, etc.)
+    allow_headers=["*"],  # allows all headers
 )
 
 
 from src.domains.chats.routes import chats_router
 from src.domains.auth.routes import auth_routes
-
 
 
 @app.exception_handler(AppError)
@@ -92,5 +93,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-app.include_router(chats_router, tags=['Chats'], prefix=f"/api/{VERSION}/chats")
-app.include_router(auth_routes, tags=['Authentication'], prefix=f"/api/{VERSION}/auth")
+app.include_router(chats_router, tags=["Chats"], prefix=f"/api/{VERSION}/chats")
+app.include_router(auth_routes, tags=["Authentication"], prefix=f"/api/{VERSION}/auth")
+
+inngest.fast_api.serve(
+    app=app,
+    client=inngest_client,
+    functions=[process_video_workflow],
+    serve_path="/api/inngest",
+)

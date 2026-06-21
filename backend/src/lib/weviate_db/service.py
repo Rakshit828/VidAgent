@@ -47,17 +47,14 @@ class WeaviateService:
                 target_vector="chunk",
                 limit=10,
             )
-    
+
         return response.objects
-    
 
     async def delete_records(self, filters: FilterReturn):
         yt_info_collection = self._wv_client.collection()
         try:
-            await yt_info_collection.data.delete_many(
-                where=filters
-            )
+            await yt_info_collection.data.delete_many(where=filters)
         except Exception as e:
             raise e
-        
+
         return

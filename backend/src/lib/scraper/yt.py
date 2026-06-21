@@ -1,8 +1,8 @@
 from __future__ import annotations
-from loguru import logger
+
 from .base import BaseSerpApiClient
-from .types import YouTubeTranscriptResponse, YouTubeVideoResponse
 from src.config import CONFIG
+from .types import YouTubeTranscriptResponse, YouTubeVideoResponse
 
 
 class YouTubeClient(BaseSerpApiClient):
@@ -15,7 +15,7 @@ class YouTubeClient(BaseSerpApiClient):
         gl: str | None = None,
         next_page_token: str | None = None,
     ) -> YouTubeVideoResponse:
-
+        """Returns the video info as per the YoutueVideoResponse pydantic model as a dict."""
         params = {"v": video_id}
 
         if hl:
@@ -31,9 +31,6 @@ class YouTubeClient(BaseSerpApiClient):
             engine=CONFIG.YOUTUBE_VIDEO_ENGINE,
             params=params,
         )
-
-        logger.debug(f"The raw data is : {data}")
-
         return YouTubeVideoResponse.model_validate(data)
 
     async def get_transcript(
@@ -44,7 +41,7 @@ class YouTubeClient(BaseSerpApiClient):
         transcript_type: str | None = None,
         title: str | None = None,
     ) -> YouTubeTranscriptResponse:
-
+        """Returns the video info as per the YoutueVideoTranscriptResponse pydantic model as a dict."""
         params = {
             "v": video_id,
         }
@@ -62,7 +59,5 @@ class YouTubeClient(BaseSerpApiClient):
             engine=CONFIG.YOUTUBE_VIDEO_TRANSCRIPT_ENGINE,
             params=params,
         )
-
-        logger.debug(f"The raw data is : {data}")
 
         return YouTubeTranscriptResponse.model_validate(data)

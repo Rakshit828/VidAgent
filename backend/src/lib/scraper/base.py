@@ -74,7 +74,6 @@ class BaseSerpApiClient:
         ) as exc:
             raise SerpApiNetworkError(str(exc)) from exc
 
-
     @staticmethod
     def _raise_for_status(
         response: httpx.Response,

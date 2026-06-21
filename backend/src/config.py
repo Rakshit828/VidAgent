@@ -12,12 +12,18 @@ class Config(BaseSettings):
     SERP_API_KEY: str
 
     FRONTEND_URL: str
-    BACKEND_URL: str 
+    BACKEND_URL: str
 
-    WEAVIATE_API_KEY: str 
-    WEAVIATE_URL: str 
-    WEAVIATE_COLLECTION_NAME: str 
-    AUTOSCHEMA_ENABLED: str 
+    WEAVIATE_API_KEY: str
+    WEAVIATE_URL: str
+    WEAVIATE_COLLECTION_NAME: str
+    AUTOSCHEMA_ENABLED: str
+
+    
+    INNGEST_DEV: int 
+    INNGEST_BASE_URL: str 
+
+    REDIS_URL: str
 
     IS_DEV: bool
 

@@ -34,24 +34,21 @@ def verify_user(password, hashed_password) -> True | False:
     return is_verified
 
 
-async def create_jwt_tokens(
-    user_uuid: uuid.UUID, role: str, is_login: bool
-) -> dict:
+async def create_jwt_tokens(user_uuid: uuid.UUID, role: str, is_login: bool) -> dict:
     """
-        This function is used to create both access and refresh token:
-        
-        For both tokens:
-        ```python
-        tokens = await create_jwt_tokens(user_uuid, role, is_login = True)
-        ```
-    
-        For access token: 
-        ```python
-        access_token = await create_jwt_tokens(user_uuid, role, is_login = False)
-        ```
+    This function is used to create both access and refresh token:
+
+    For both tokens:
+    ```python
+    tokens = await create_jwt_tokens(user_uuid, role, is_login = True)
+    ```
+
+    For access token:
+    ```python
+    access_token = await create_jwt_tokens(user_uuid, role, is_login = False)
+    ```
     """
     now = datetime.now(timezone.utc)
-    
 
     access_payload = {
         "jti": str(uuid.uuid4()),
@@ -81,12 +78,11 @@ async def create_jwt_tokens(
             key=CONFIG.JWT_SECRET_KEY,
             algorithm=CONFIG.JWT_ALGORITHM,
         )
-    
+
     if is_login is True:
         return {"access_token": access_token, "refresh_token": refresh_token}
     else:
-        return { "access_token": access_token }
-    
+        return {"access_token": access_token}
 
 
 def decode_jwt_tokens(jwt_token: str, is_refresh: bool = False):
@@ -114,7 +110,6 @@ async def create_url_safe_token(email):
         return token
     except Exception as e:
         print(e)
-
 
 
 async def decode_url_safe_token(token: str):

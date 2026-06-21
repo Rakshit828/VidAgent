@@ -1,5 +1,36 @@
 from urllib.parse import urlparse, parse_qs
 import re
+from typing import ParamSpec, TypeVar, Callable, Awaitable, Any
+from src.db.postgres.setup import Session
+
+R = TypeVar("R")
+P = ParamSpec("P")
+
+
+async def wrap_in_session(
+    func: Callable[P, Awaitable[R]],
+    *args: P.args,
+    **kwargs: P.kwargs,
+) -> R:
+    if kwargs["session"] is not None:
+        raise Exception("Cannot Provide session in wrap_in_session. It must be None.")
+
+    async with Session() as async_session:
+        kwargs["session"] = async_session
+        return await func(*args, **kwargs)
+
+
+async def wrap_in_transaction(
+    func: Callable[P, Awaitable[R]],
+    *args: P.args,
+    **kwargs: P.kwargs,
+) -> Any:
+    if "session" in kwargs:
+        raise ValueError("Session should not be provided.")
+    async with Session() as session:
+        kwargs["session"] = session
+        async with session.begin():
+            return await func(*args, **kwargs)
 
 
 def get_video_id(url_or_id: str) -> str | None:

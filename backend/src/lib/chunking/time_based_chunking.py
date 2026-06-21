@@ -80,6 +80,7 @@ class TimeBasedChunking(ChunkingStrategy):
         transcript_data: YouTubeTranscriptResponse,
         video_response: YouTubeVideoResponse | None = None,
     ) -> List[Chunk]:
+        
         snippets = normalize_snippets(transcript_data.transcript)
         if not snippets:
             return []

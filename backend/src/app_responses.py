@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Optional
+from typing import Generic, TypeVar, Optional, Any
 from pydantic import BaseModel
 
 T = TypeVar("T")
@@ -24,5 +24,5 @@ class ErrorResponse(ResponseBase[T]):
 
 
 class AppError(Exception):
-    def __init__(self, error_response: ErrorResponse):
+    def __init__(self, error_response: ErrorResponse[Any]):
         self.error_response = error_response
