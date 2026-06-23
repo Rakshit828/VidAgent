@@ -1,6 +1,6 @@
 .env
 .env.docker
-
+D:\Projects\VidAgent\backend\.env.docker
 .env.*
 .venv
 chroma_db
