@@ -56,14 +56,18 @@ class YoutubeInfoCollectionObject(TypedDict):
     chunk_end_sec: int
 
 
-class WeaviateQuerySearch(BaseModel):
+
+class WeaviateQueryOptions(BaseModel):
     field: str
-    search: SearchTypeEnum
+    search_type: SearchTypeEnum
     value: str
+    filters: FilterReturn
+    limit: int 
 
     model_config = {
         "arbitrary_types_allowed": True
     }
+    
 
     @model_validator(mode="after")
     def validation(self) -> Self:
@@ -73,17 +77,8 @@ class WeaviateQuerySearch(BaseModel):
             if prop["field"] == self.field and prop["search_type"] is not None
         ]
         search_type = search_type[0]
-        if self.search != SearchTypeEnum.HYBRID and self.search != search_type:
+        if self.search_type != SearchTypeEnum.HYBRID and self.search_type != search_type:
             raise Exception(
-                f"{self.search} not allowed for field {self.field} with search type: {search_type}"
+                f"{self.search_type} not allowed for field {self.field} with search type: {search_type}"
             )
         return self
-
-
-class WeaviateQueryOptions(BaseModel):
-    search: WeaviateQuerySearch
-    filters: FilterReturn
-
-    model_config = {
-        "arbitrary_types_allowed": True
-    }

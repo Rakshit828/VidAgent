@@ -7,7 +7,9 @@ from loguru import logger
 from src.config import CONFIG
 
 import tracemalloc
+
 tracemalloc.start()
+
 
 class WeaviateClient:
     _obj: "WeaviateClient | None" = None
@@ -40,9 +42,9 @@ class WeaviateClient:
                 collection: wvc.CollectionAsync = (
                     await async_weaviate.collections.create(
                         CONFIG.WEAVIATE_COLLECTION_NAME,
-                        vector_config=Configure.Vectors.text2vec_weaviate(
-                            source_properties=["chunk"]
-                        ),
+                        vector_config=[Configure.Vectors.text2vec_weaviate(
+                            name="chunk", source_properties=["chunk"]
+                        )], 
                         properties=[
                             Property(
                                 name="chunk",  # Both vectorized and BM25

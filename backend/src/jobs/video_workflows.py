@@ -3,7 +3,7 @@ import inngest
 from src.services.inngest_client import inngest_client
 
 from .config import InngestEventsEnum
-from src.jobs.steps.video import (
+from src.jobs.steps.video_processing.steps import (
     get_video_transcript,
     chunk_transcript,
     store_chunks_in_vdb,

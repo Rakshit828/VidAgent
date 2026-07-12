@@ -23,29 +23,29 @@ class WeaviateService:
 
     async def retrieve(self, query_options: WeaviateQueryOptions):
         yt_info_collection = self._wv_client.collection()
-        search = query_options.search
-        if search.search == SearchTypeEnum.HYBRID:
+
+        if query_options.search_type == SearchTypeEnum.HYBRID:
             response = await yt_info_collection.query.hybrid(
-                query=search.value,
+                query=query_options.value,
                 alpha=0.7,
-                query_properties=[search.field],
+                query_properties=[query_options.field],
                 filters=query_options.filters,
-                limit=10,
+                limit=query_options.limit,
             )
-        elif search.search == SearchTypeEnum.BM25:
+        if query_options.search_type == SearchTypeEnum.BM25:
             response = await yt_info_collection.query.bm25(
-                query=search.value,
-                query_properties=[search.field],
+                query=query_options.value,
+                query_properties=[query_options.field],
                 filters=query_options.filters,
-                limit=10,
+                limit=query_options.limit,
             )
         else:
             # THis is pure semantic search
             response = await yt_info_collection.query.near_text(
-                query=search.value,
+                query=query_options.value,
                 filters=query_options.filters,
                 target_vector="chunk",
-                limit=10,
+                limit=query_options.limit,
             )
 
         return response.objects
