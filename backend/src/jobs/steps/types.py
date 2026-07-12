@@ -2,6 +2,7 @@ from typing import TypedDict, List, Optional, Any, Dict
 from src.lib.chunking.common import ChunkingStrategyName
 from src.db.postgres.schemas import VideoProcessingStatusEnum
 
+
 class GetVideoTranscriptStepInput(TypedDict):
     video_id: str
     language_code: str | None
@@ -87,8 +88,9 @@ class StoreChunksInVDBStepOutput(TypedDict):
 
 class UpdateVideoInfoStepInput(TypedDict):
     yt_video_id: str
-    duration_secs: int
-    transcript: str
+    duration_secs: int | None
+    transcript: str | None
+    status: VideoProcessingStatusEnum
 
 
 class UpdateVideoInfoStepOutput(TypedDict):

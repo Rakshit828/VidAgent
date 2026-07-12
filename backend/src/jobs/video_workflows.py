@@ -18,6 +18,7 @@ from src.jobs.steps.video import (
     GetVideoTranscriptStepOutput,
 )
 from src.db.redis_db import publish_workflow_status
+from src.db.postgres.schemas import VideoProcessingStatusEnum
 from src.jobs.utils import SPLITTER
 
 
@@ -154,6 +155,7 @@ async def process_video_workflow(ctx: inngest.Context) -> None:
                     yt_video_id=str(yt_video_id),
                     duration_secs=duration // 1000,
                     transcript=transcript_text,
+                    status=VideoProcessingStatusEnum.COMPLETED,
                 )
             ),
         )
@@ -172,22 +174,33 @@ async def process_video_workflow(ctx: inngest.Context) -> None:
         logger.error("StepError occurred. Details are : %s", e.message)
         message: str = e.message
 
-        if isinstance(e.__cause__, inngest.NonRetriableError):
-            message_dict: dict[str, str] = {}
-            key_values = message.split(SPLITTER)
-            for key_val in key_values:
-                unit = key_val.split("=")
-                message_dict[unit[0]] = unit[1]
+        message_dict: dict[str, str] = {}
+        key_values = message.split(SPLITTER)
+        for key_val in key_values:
+            unit = key_val.split("=")
+            message_dict[unit[0]] = unit[1]
 
-            logger.error("Error occurred: %s", message_dict)
+        logger.error("Error occurred: %s", message_dict)
 
-            await publish_workflow_status(
-                chat_id=str(chat_id),
-                step=message_dict.get("step", "not defined"),
-                status="failed",
-                progress=-1,
-                message=message_dict.get("message", "not defined"),
-            )
+        await publish_workflow_status(
+            chat_id=str(chat_id),
+            step=message_dict.get("step", "not defined"),
+            status="failed",
+            progress=-1,
+            message=message_dict.get("message", "not defined"),
+        )
+
+        output: UpdateVideoInfoStepOutput = await step.run(
+            step_id="update-video-as-unprocessable",
+            handler=lambda: update_video_info(
+                inputs=UpdateVideoInfoStepInput(
+                    yt_video_id=str(yt_video_id),
+                    status=VideoProcessingStatusEnum.UNPROCESSABLE,
+                    duration_secs=None,
+                    transcript=None,
+                )
+            ),
+        )
 
     except Exception as e:
         logger.error(

@@ -89,8 +89,9 @@ async def update_video_info(inputs: UpdateVideoInfoStepInput):
         repo.update_video_info,
         session=None,
         yt_video_id=inputs["yt_video_id"],
-        duration=inputs["duration_secs"],
-        transcript=inputs["transcript"],
+        duration=inputs.get("duration_secs"),
+        transcript=inputs.get("transcript"),
+        processing_status=inputs["status"],
     )
     assert video
     return UpdateVideoInfoStepOutput(

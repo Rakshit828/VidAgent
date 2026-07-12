@@ -13,6 +13,7 @@ class VideoProcessingStatusEnum(str, Enum):
     PENDING = "PENDING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+    UNPROCESSABLE = "UNPROCESSABLE"
 
 
 class MessageRoleEnum(str, Enum):
