@@ -18,8 +18,7 @@ from src.jobs.steps.video import (
     GetVideoTranscriptStepOutput,
 )
 from src.db.redis_db import publish_workflow_status
-from src.lib.scraper.exceptions import SerpApiResponseError
-from loguru import logger
+from src.jobs.utils import SPLITTER
 
 
 @inngest_client.create_function(
@@ -28,7 +27,8 @@ from loguru import logger
     idempotency="event.data.video_id",
 )
 async def process_video_workflow(ctx: inngest.Context) -> None:
-    logger.info(ctx.event)
+    logger = ctx.logger
+    logger.info("Event is : %s", ctx.event)
     step = ctx.step
 
     video_id = ctx.event.data["video_id"]
@@ -36,11 +36,14 @@ async def process_video_workflow(ctx: inngest.Context) -> None:
     yt_video_id = ctx.event.data["yt_video_id"]
 
     logger.info(
-        f"[Video_id]: {video_id}, [Chat_id]: {chat_id}, [yt_video_id]: {yt_video_id}"
+        "[Video_id]: %s, [Chat_id]: %s, [yt_video_id]: %s",
+        video_id,
+        chat_id,
+        yt_video_id,
     )
 
     try:
-        # ── Step 1: Fetch transcript ───────────────────────────────────
+
         await publish_workflow_status(
             chat_id=str(chat_id),
             step="yt-get-video-transcript",
@@ -56,6 +59,11 @@ async def process_video_workflow(ctx: inngest.Context) -> None:
                     video_id=str(yt_video_id), language_code=None
                 )
             ),
+        )
+
+        logger.info(
+            "Transcript successfully fetched. [CHUNKS]: %d",
+            len(transcript_response.get("transcript", [])),
         )
 
         await publish_workflow_status(
@@ -83,6 +91,7 @@ async def process_video_workflow(ctx: inngest.Context) -> None:
                 )
             ),
         )
+        logger.info("Transcript chunked.")
 
         await publish_workflow_status(
             chat_id=str(chat_id),
@@ -111,7 +120,9 @@ async def process_video_workflow(ctx: inngest.Context) -> None:
         )
         total_chunks = len(insert_response)
 
-        logger.info(f"[yt_video_id]: {yt_video_id}, [chunks]: {total_chunks}")
+        logger.info(
+            "Stored in VDB: [yt_video_id]: %s, [chunks]: %d", yt_video_id, total_chunks
+        )
 
         await publish_workflow_status(
             chat_id=str(chat_id),
@@ -147,9 +158,7 @@ async def process_video_workflow(ctx: inngest.Context) -> None:
             ),
         )
 
-        logger.info(
-            f"[video_id]: {output["video_id"]}, [STATUS]: {output['processing_status']}"
-        )
+        logger.info("Updated video info in db: %s", output)
 
         await publish_workflow_status(
             chat_id=str(chat_id),
@@ -159,30 +168,39 @@ async def process_video_workflow(ctx: inngest.Context) -> None:
             message="Video processing complete.",
         )
 
-    # except inngest.StepError as exc:
-    #     if isinstance(exc.__cause__, SerpApiResponseError):
-    #         # Raised when no transcript to fetch for the video
-    #         await publish_workflow_status(
-    #             chat_id=str(chat_id),
-    #             step="workflow",
-    #             status="failed",
-    #             progress=-1,
-    #             message=f"Transcript Not Available For This Video.",
-    #         )
-    #         raise inngest.NonRetriableError(
-    #             message="Transcript Not Available For This Video."
-    #         )
+    except inngest.NonRetriableError as e:
+        logger.error("StepError occurred. Details are : %s", e.message)
+        message: str = e.message
+
+        if isinstance(e.__cause__, inngest.NonRetriableError):
+            message_dict: dict[str, str] = {}
+            key_values = message.split(SPLITTER)
+            for key_val in key_values:
+                unit = key_val.split("=")
+                message_dict[unit[0]] = unit[1]
+
+            logger.error("Error occurred: %s", message_dict)
+
+            await publish_workflow_status(
+                chat_id=str(chat_id),
+                step=message_dict.get("step", "not defined"),
+                status="failed",
+                progress=-1,
+                message=message_dict.get("message", "not defined"),
+            )
 
     except Exception as e:
-        logger.error(f"Workflow failed for chat_id={chat_id}: {e}")
-        logger.error(f"ERROR TYPE: {type(e)}, CAUSE: {e.__cause__}")
+        logger.error(
+            "UnexpedtedError occurred. Details are : [ERROR]: %s, [MSG]: %s",
+            e.__class__.__name__,
+            str(e),
+        )
         await publish_workflow_status(
             chat_id=str(chat_id),
-            step="workflow",
+            step="not defined",
             status="failed",
             progress=-1,
-            message=f"Workflow failed: {str(e)}",
+            message="",
         )
-        raise
 
     return None

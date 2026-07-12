@@ -18,15 +18,28 @@ from src.domains.chats.repository import VideoInfoRepository
 from src.utils import wrap_in_session
 from typing import Dict
 from uuid import UUID
+from src.lib.scraper.exceptions import SerpApiResponseError
+import inngest
+from src.jobs.utils import construct_error_msg
 
 
 async def get_video_transcript(
     inputs: GetVideoTranscriptStepInput,
 ) -> GetVideoTranscriptStepOutput:
     yt_client = YouTubeClient()
-    result: YouTubeTranscriptResponse = await yt_client.get_transcript(
-        video_id=inputs["video_id"], language_code=inputs.get("language_code", None)
-    )
+    try:
+        result: YouTubeTranscriptResponse = await yt_client.get_transcript(
+            video_id=inputs["video_id"], language_code=inputs.get("language_code", None)
+        )
+    except SerpApiResponseError as exc:
+        raise inngest.NonRetriableError(
+            message=construct_error_msg(
+                step="get_video_transcript",
+                message="No transcript available for this video.",
+                error=exc.__class__.__name__,
+            )
+        )
+
     return GetVideoTranscriptStepOutput(**result.model_dump())
 
 

@@ -110,7 +110,6 @@ async def stream_workflow_status(chat_id: str, request: Request):
             await pubsub.unsubscribe(channel)
             await pubsub.close()
 
-
     return StreamingResponse(
         _event_generator(),
         media_type="text/event-stream",

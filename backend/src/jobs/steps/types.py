@@ -2,7 +2,6 @@ from typing import TypedDict, List, Optional, Any, Dict
 from src.lib.chunking.common import ChunkingStrategyName
 from src.db.postgres.schemas import VideoProcessingStatusEnum
 
-
 class GetVideoTranscriptStepInput(TypedDict):
     video_id: str
     language_code: str | None

@@ -11,6 +11,7 @@ from src.config import CONFIG
 import inngest.fast_api
 from src.services.inngest_client import inngest_client
 from src.jobs.video_workflows import process_video_workflow
+from src.lib.weviate_db.client import WeaviateClient
 
 load_dotenv()
 
@@ -19,6 +20,9 @@ VERSION = "v1"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    
+    await WeaviateClient.create()
+
     yield
 
 
