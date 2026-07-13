@@ -112,7 +112,7 @@ class Messages(Base):
         pg.ENUM(MessageRoleEnum, name="messages_role_enum")
     )
     content: Mapped[str] = mapped_column(pg.TEXT, nullable=False)
-    tokens: Mapped[str] = mapped_column(pg.NUMERIC, nullable=False)
+    tokens: Mapped[int] = mapped_column(pg.NUMERIC, nullable=False)
 
     created_at: Mapped[datetime] = mapped_column(
         pg.TIMESTAMP(timezone=True), default=lambda: datetime.now(timezone.utc)
